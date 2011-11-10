@@ -116,7 +116,7 @@ class Compiler(py2js.compiler.BaseCompiler):
             js_args.append(arg.id)
 
             if default is not None:
-                js_defaults.append("%(id)s = typeof(%(id)s) != 'undefined' ? %(id)s : %(def)s;\n" % { 'id': arg.id, 'def': self.visit(default) })
+                js_defaults.append("%(id)s = typeof(%(id)s) != 'undefined' ? %(id)s : %(def)s;" % { 'id': arg.id, 'def': self.visit(default) })
 
         if node.decorator_list and not is_static and not is_javascript:
             raise JSError("decorators are not supported")
@@ -128,9 +128,9 @@ class Compiler(py2js.compiler.BaseCompiler):
                 if not (js_args[0] == "self"):
                     raise NotImplementedError("The first argument must be 'self'.")
                 del js_args[0]
-            js = ["Function(function(%s) {" % (", ".join(js_args))]
+            js = ["function(%s) {" % (", ".join(js_args))]
         else:
-            js = ["var %s = Function(function(%s) {" % (node.name, ", ".join(js_args))]
+            js = ["var %s = pyfunction(function(%s) {" % (node.name, ", ".join(js_args))]
 
         js.extend(self.indent(js_defaults))
 
@@ -161,7 +161,10 @@ class Compiler(py2js.compiler.BaseCompiler):
             #     js.append("}")
 
         self._scope = []
-        return js + ["});"]
+        if self._class_name:
+            return js + ["}"]
+        else:
+            return js + ["})"]
 
     def visit_ClassDef(self, node):
         js = []
@@ -210,11 +213,11 @@ class Compiler(py2js.compiler.BaseCompiler):
 
     def visit_DeleteSimple(self, node):
         if isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Index):
-            js = "%s.__delitem__(%s);" % (self.visit(node.value), self.visit(node.slice))
+            js = "%s.__delitem__.__call__(%s);" % (self.visit(node.value), self.visit(node.slice))
         elif isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Slice):
-            js = "%s.__delslice__(%s, %s);" % (self.visit(node.value), self.visit(node.slice.lower), self.visit(node.slice.upper))
+            js = "%s.__delslice__.__call__(%s, %s);" % (self.visit(node.value), self.visit(node.slice.lower), self.visit(node.slice.upper))
         elif isinstance(node, ast.Attribute):
-            js = '%s.__delattr__(__py2js_str.__call__("%s"));' % (self.visit(node.value), node.attr)
+            js = '%s.__delattr__.__call__(__py2js_str.__call__("%s"));' % (self.visit(node.value), node.attr)
         elif isinstance(node, ast.Name):
             raise JSError("Javascript does not support deleting variables. Cannot compile")
         else:
@@ -234,13 +237,13 @@ class Compiler(py2js.compiler.BaseCompiler):
                     if not (var in self._scope):
                         self._scope.append(var)
                         declare = "var "
-                js.append("%s%s = %s.__getitem__(%d);" % (declare, var, dummy, i))
+                js.append("%s%s = %s.__getitem__.__call__(%d);" % (declare, var, dummy, i))
         elif isinstance(target, ast.Subscript) and isinstance(target.slice, ast.Index):
             # found index assignment
-            js = ["%s.__setitem__(%s, %s);" % (self.visit(target.value), self.visit(target.slice), value)]
+            js = ["%s.__setitem__.__call__(%s, %s);" % (self.visit(target.value), self.visit(target.slice), value)]
         elif isinstance(target, ast.Subscript) and isinstance(target.slice, ast.Slice):
             # found slice assignmnet
-            js = ["%s.__setslice__(%s, %s, %s);" % (self.visit(target.value), self.visit(target.slice.lower), self.visit(target.slice.upper), value)]
+            js = ["%s.__setslice__.__call__(%s, %s, %s);" % (self.visit(target.value), self.visit(target.slice.lower), self.visit(target.slice.upper), value)]
         else:
             var = self.visit(target)
             if isinstance(target, ast.Name):
@@ -251,7 +254,7 @@ class Compiler(py2js.compiler.BaseCompiler):
                     declare = ""
                 js = ["%s%s = %s;" % (declare, var, value)]
             elif isinstance(target, ast.Attribute):
-                js = ["%s.__setattr__(__py2js_str.__call__(\"%s\"), %s);" % (self.visit(target.value), str(target.attr), value)]
+                js = ["%s.__setattr__.__call__(__py2js_str.__call__(\"%s\"), %s);" % (self.visit(target.value), str(target.attr), value)]
             else:
                 raise JSError("Unsupported assignment type")
         return js
@@ -266,7 +269,7 @@ class Compiler(py2js.compiler.BaseCompiler):
         name = node.op.__class__.__name__
         if name in self.ops_augassign:
             return self.visit_AssignSimple(node.target,
-                "%s.__%s__(%s)" % (target, self.ops_augassign[name], value))
+                "%s.__%s__.__call__(%s)" % (target, self.ops_augassign[name], value))
         else:
             raise JSError("Unsupported AugAssign type %s" % node.op)
 
@@ -288,11 +291,11 @@ class Compiler(py2js.compiler.BaseCompiler):
         js.append("try {")
         js.append("  var %s;" % for_target)
         for_init = "var %s = iter.__call__(%s)" % (iter_dummy, for_iter)
-        for_iter = "%s = %s.next()" % (for_target, iter_dummy)
+        for_iter = "%s = %s.next.__call__()" % (for_target, iter_dummy)
         for_cond = ""
         js.append("  for (%s; %s; %s) {" % (for_init, for_iter, for_cond))
         if isinstance(node.target, ast.Tuple):
-            js.append("    %s;" % "; ".join(["var %s = %s.__getitem__(%s)" % (x.id, for_target, i) for i, x in enumerate(node.target.elts)]))
+            js.append("    %s;" % "; ".join(["var %s = %s.__getitem__.__call__(%s)" % (x.id, for_target, i) for i, x in enumerate(node.target.elts)]))
 
         for stmt in node.body:
             js.extend(self.indent(self.visit(stmt)))
@@ -421,23 +424,21 @@ class Compiler(py2js.compiler.BaseCompiler):
         return []
 
     def visit_Lambda(self, node):
-        node_args = self.visit(node.args)
-        node_body = self.visit(node.body)
-        return "Function(function(%s) {return %s;})" % (node_args, node_body)
+        return "pyfunction(function(%s) {return %s;})" % (self.visit(node.args), self.visit(node.body))
 
     def visit_BoolOp(self, node):
         if isinstance(node.op, ast.And):
-            return "%s.%s" % (self.visit(node.values[0]), ".".join(["__and__(%s)" % self.visit(val) for val in node.values[1:]]))
+            return "%s.%s" % (self.visit(node.values[0]), ".".join(["__and__.__call__(%s)" % self.visit(val) for val in node.values[1:]]))
         if isinstance(node.op, ast.Or):
-            return "%s.%s" % (self.visit(node.values[0]), ".".join(["__or__(%s)" % self.visit(val) for val in node.values[1:]]))
+            return "%s.%s" % (self.visit(node.values[0]), ".".join(["__or__.__call__(%s)" % self.visit(val) for val in node.values[1:]]))
         else:
             raise JSError("Unknown boolean operation %s" % node.op)
 
     def visit_UnaryOp(self, node):
-        if   isinstance(node.op, ast.USub  ): return "%s.__neg__()"            % (self.visit(node.operand))
-        elif isinstance(node.op, ast.UAdd  ): return "%s.__pos__()"            % (self.visit(node.operand))
-        elif isinstance(node.op, ast.Invert): return "%s.__invert__()"         % (self.visit(node.operand))
-        elif isinstance(node.op, ast.Not   ): return "py_builtins.__not__(%s)" % (self.visit(node.operand))
+        if   isinstance(node.op, ast.USub  ): return "%s.__neg__.__call__()"            % (self.visit(node.operand))
+        elif isinstance(node.op, ast.UAdd  ): return "%s.__pos__.__call__()"            % (self.visit(node.operand))
+        elif isinstance(node.op, ast.Invert): return "%s.__invert__.__call__()"         % (self.visit(node.operand))
+        elif isinstance(node.op, ast.Not   ): return "py_builtins.__not__.__call__(%s)" % (self.visit(node.operand))
         else:
             raise JSError("Unsupported unary op %s" % node.op)
 
@@ -446,7 +447,7 @@ class Compiler(py2js.compiler.BaseCompiler):
         right = self.visit(node.right)
 
         if isinstance(node.op, ast.Mod) and isinstance(node.left, ast.Str):
-            return "%s.__mod__(%s)" % (left, right)
+            return "%s.__mod__.__call__(%s)" % (left, right)
 
         if not self.future_division and isinstance(node.op, ast.Div):
             node.op = ast.FloorDiv()
@@ -454,7 +455,7 @@ class Compiler(py2js.compiler.BaseCompiler):
         name = node.op.__class__.__name__
 
         if name in self.ops_binop:
-            return "%s.__%s__(%s)" % (left, self.ops_binop[name], right)
+            return "%s.__%s__.__call__(%s)" % (left, self.ops_binop[name], right)
         else:
             raise JSError("Unknown binary operation type %s" % node.op)
 
@@ -467,13 +468,13 @@ class Compiler(py2js.compiler.BaseCompiler):
         name = op.__class__.__name__
 
         if name in self.ops_compare:
-            return "%s.__%s__(%s)" % (self.visit(node.left), self.ops_compare[name], self.visit(comp))
+            return "%s.__%s__.__call__(%s)" % (self.visit(node.left), self.ops_compare[name], self.visit(comp))
         elif isinstance(op, ast.In):
-            return "%s.__contains__(%s)" % (self.visit(comp), self.visit(node.left))
+            return "%s.__contains__.__call__(%s)" % (self.visit(comp), self.visit(node.left))
         elif isinstance(op, ast.Is):
-            return "py_builtins.__is__(%s, %s)" % (self.visit(node.left), self.visit(comp))
+            return "py_builtins.__is__.__call__(%s, %s)" % (self.visit(node.left), self.visit(comp))
         elif isinstance(op, ast.NotIn):
-            return "py_builtins.__not__(%s.__contains__(%s))" % (self.visit(comp), self.visit(node.left))
+            return "py_builtins.__not__(%s.__contains__.__call__(%s))" % (self.visit(comp), self.visit(node.left))
         else:
             raise JSError("Unknown comparison type %s" % node.ops[0])
 
@@ -512,14 +513,13 @@ class Compiler(py2js.compiler.BaseCompiler):
 
         js_args = ",".join([ self.visit(arg) for arg in node.args ])
 
-        if isinstance(node.func, ast.Attribute):
-            root = self.visit(node.func.value)
-        else:
-            root = func
-        if js_args:
-            js_args = ", " + js_args
-        js.append("%s.__call__.call(%s%s)" % (func, root, js_args))
-
+#        if isinstance(node.func, ast.Attribute):
+#            root = self.visit(node.func.value)
+#        else:
+#            root = func
+#        if js_args:
+#            js_args = ", " + js_args
+        js.append("%s.__call__(%s)" % (func, js_args))
         if node.keywords and compound:
             js.append("}()")
             return "".join(js)
@@ -540,7 +540,7 @@ class Compiler(py2js.compiler.BaseCompiler):
                 raise JSError("Unknown exception type")
 
     def visit_Attribute(self, node):
-        return """%s.__getattr__(__py2js_str.__call__("%s"))""" % (self.visit(node.value), node.attr)
+        return """%s.__getattr__.__call__(__py2js_str.__call__("%s"))""" % (self.visit(node.value), node.attr)
 
     def visit_Tuple(self, node):
         els = [self.visit(e) for e in node.elts]
@@ -593,7 +593,7 @@ class Compiler(py2js.compiler.BaseCompiler):
         raise NotImplementedError("Slice")
 
     def visit_Subscript(self, node):
-        return "%s.__getitem__(%s)" % (self.visit(node.value), self.visit(node.slice))
+        return "%s.__getitem__.__call__(%s)" % (self.visit(node.value), self.visit(node.slice))
 
     def visit_Index(self, node):
         return self.visit(node.value)
