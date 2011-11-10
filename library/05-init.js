@@ -36,7 +36,7 @@ function defined(obj) {
 function iterate(seq, func) {
     while (true) {
         try {
-            func(seq.next());
+            func(seq.next.__call__());
         } catch (exc) {
             if (js(isinstance.__call__(exc, py_builtins.StopIteration))) {
                 break;
@@ -50,6 +50,11 @@ function iterate(seq, func) {
 var Function = function(func) {
     func.__call__ = func;
     return func;
+};
+
+var pyfunction = function(f) {
+    f.__call__ = f;
+    return f;
 };
 
 var js = Function(function(obj) {
@@ -67,7 +72,7 @@ var js = Function(function(obj) {
        the object itself.
     */
     if ((obj != null) && typeof(obj._js_) != 'undefined')
-        return obj._js_();
+        return obj._js_.__call__();
     else
         return obj;
 });

@@ -31,14 +31,14 @@ list.prototype.__init__ = tuple.prototype.__init__;
 
 list.prototype.__str__ = function () {
     var items = map(function (i) {return repr(i);}, this._items);
-    return str.__call__("[" + str.__call__(", ").join(items) + "]");
+    return str.__call__("[" + str.__call__(", ").join.__call__(items) + "]");
 };
 
 list.prototype.__eq__ = tuple.prototype.__eq__;
 
 list.prototype.__repr__ = function () {
     var items = map(function (i) {return repr(i);}, this._items);
-    return str.__call__("[" + str.__call__(", ").join(items) + "]");
+    return str.__call__("[" + str.__call__(", ").join.__call__(items) + "]");
 };
 
 list.prototype._js_ = tuple.prototype._js_;
@@ -54,10 +54,10 @@ list.prototype.__getitem__ = tuple.prototype.__getitem__;
 list.prototype.__setitem__ = function(index, value) {
     if (typeof(index) === 'number') index = _int.__call__(index);
 
-    if (js(index.__ge__(_int.__call__(0)).__and__(index.__lt__(len(this))))) {
-        this._items[index.__int__()] = value;
-    } else if (js(index.__lt__(_int.__call__(0)).__and__(index.__ge__(len(this).__neg__())))) {
-        this._items[index.__add__(len(this)).__int__()] = value;
+    if (js(index.__ge__.__call__($c0).__and__.__call__(index.__lt__.__call__(len(this))))) {
+        this._items[index.__int__.__call__()] = value;
+    } else if (js(index.__lt__.__call__($c0).__and__.__call__(index.__ge__.__call__(len(this).__neg__.__call__())))) {
+        this._items[index.__add__.__call__(len(this)).__int__.__call__()] = value;
     } else {
         throw py_builtins.IndexError.__call__("list index out of range");
     }
@@ -111,7 +111,7 @@ list.prototype.index = Function(function(value, start, end) {
         }
 
         if (defined(_value.__eq__)) {
-            if (js(_value.__eq__(value)))
+            if (js(_value.__eq__.__call__(value)))
                 return i;
         }
     }
@@ -120,10 +120,10 @@ list.prototype.index = Function(function(value, start, end) {
 });
 
 list.prototype.remove = Function(function(value) {
-    this.__delitem__(this.index(value));
+    this.__delitem__.__call__(this.index.__call__(value));
 });
 
-list.prototype.append = Function(function(value) {
+list.prototype.append = function append(value) {
     if (typeof(value) === 'string') {
         this._items.push(str.__call__(value));
     } else if (typeof(value) === 'number') {
@@ -132,7 +132,7 @@ list.prototype.append = Function(function(value) {
         this._items.push(value);
     }
     this._len = -1;
-});
+};
 
 list.prototype.extend = Function(function(l) {
     var items;
@@ -151,8 +151,8 @@ list.prototype.pop = Function(function() {
         throw py_builtins.IndexError.__call__("pop from empty list");
 });
 
-list.prototype.sort = Function(function() {
-    var cmp = function(a, b) { return js(a.__cmp__(b));};
+list.prototype.sort = function sort() {
+    var cmp = function(a, b) { return js(a.__cmp__.__call__(b));};
     if (arguments.length > 0)
         cmp = js(arguments[0]);
 
@@ -172,7 +172,7 @@ list.prototype.sort = Function(function() {
     }
 
     this._items.sort(function (a, b) {return mcmp(key(a), key(b));});
-});
+};
 
 list.prototype.insert = Function(function(index, x) {
     var a = this._items.slice(0, index);
@@ -184,7 +184,7 @@ list.prototype.insert = Function(function(index, x) {
 list.prototype.reverse = Function(function() {
     var new_list = list.__call__([]);
     iterate(iter.__call__(this), function(item) {
-            new_list.insert(0, item);
+            new_list.insert.__call__(0, item);
     });
     this._items = new_list._items;
 });

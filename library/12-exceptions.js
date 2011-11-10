@@ -37,10 +37,6 @@ Exception.prototype.__str__ = function() {
     return str.__call__(this.message);
 };
 
-Exception.prototype.toString = function() {
-    return js(this.__str__());
-};
-
 py_builtins.__exceptions__ = [
     'NotImplementedError',
     'ZeroDivisionError',

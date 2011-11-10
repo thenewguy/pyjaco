@@ -36,8 +36,8 @@ dict.prototype.__init__ = function(args) {
         if (defined(args.__iter__)) {
             items = {};
             iterate(iter.__call__(args), function(item) {
-                    key = js(item.__getitem__(0));
-                    value = item.__getitem__(1);
+                    key = js(item.__getitem__.__call__(0));
+                    value = item.__getitem__.__call__(1);
                     items[key] = value;
             });
             this._items = items;
@@ -64,7 +64,7 @@ dict.prototype._js_ = function () {
 
     var _this_dict = this; // so that we can access it from within the closure:
     iterate(iter.__call__(this), function(key) {
-        items[js(key)] = js(_this_dict.__getitem__(key));
+        items[js(key)] = js(_this_dict.__getitem__.__call__(key));
     });
 
     return items;
@@ -84,7 +84,7 @@ dict.prototype.__len__ = function() {
 };
 
 dict.prototype.__iter__ = function() {
-    return iter.__call__(this.keys());
+    return iter.__call__(this.keys.__call__());
 };
 
 dict.prototype.__contains__ = function(key) {
@@ -106,7 +106,7 @@ dict.prototype.__setitem__ = function(key, value) {
 };
 
 dict.prototype.__delitem__ = function(key) {
-    if (js(this.__contains__(key))) {
+    if (js(this.__contains__.__call__(key))) {
         delete this._items[key];
     } else {
         throw py_builtins.KeyError.__call__(str.__call__(key));
@@ -131,7 +131,7 @@ dict.prototype.items = Function(function() {
     var items = list.__call__();
 
     for (var key in this._items) {
-        items.append(tuple.__call__([key, this._items[key]]));
+        items.append.__call__(tuple.__call__([key, this._items[key]]));
     }
 
     return items;
@@ -141,7 +141,7 @@ dict.prototype.keys = Function(function() {
     var keys = list.__call__();
 
     for (var key in this._items) {
-        keys.append(key);
+        keys.append.__call__(key);
     }
 
     return keys;
@@ -151,7 +151,7 @@ dict.prototype.values = Function(function() {
     var values = list.__call__();
 
     for (var key in this._items) {
-        values.append(this._items[key]);
+        values.append.__call__(this._items[key]);
     }
 
     return values;
@@ -188,7 +188,7 @@ dict.prototype.pop = Function(function(key, value) {
     return _value;
 });
 
-dict.prototype.popitem = Function(function() {
+dict.prototype.popitem = function() {
     var _key;
 
     for (var key in this._items) {
@@ -201,4 +201,4 @@ dict.prototype.popitem = Function(function() {
     } else {
         throw py_builtins.KeyError.__call__("popitem(): dictionary is empty");
     }
-});
+};

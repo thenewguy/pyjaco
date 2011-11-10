@@ -33,21 +33,10 @@ bool.prototype.__init__ = function(b) {
     }
 };
 
-var True = bool.__call__(true);
-var False = bool.__call__(false);
-
-bool.__call__ = function(b) {
-    if (b) {
-        return True;
-    } else {
-        return False;
-    }
-};
-
-var __py2jsbool = bool;
+//var __py2jsbool = bool;
 
 bool.prototype.__bool__ = function () {
-    return this._obj;
+    return this;
 };
 
 bool.prototype.__str__ = function () {
@@ -60,9 +49,9 @@ bool.prototype.__str__ = function () {
 
 bool.prototype.toString = function () {
     if (this._obj) {
-        return "1";
+        return "true";
     } else {
-        return "";
+        return "false";
     }
 };
 
@@ -109,4 +98,16 @@ bool.prototype.__int__ = function(x) {
     } else {
         return $c0;
     }
-}
+};
+
+var True = bool.__call__(true);
+var False = bool.__call__(false);
+
+bool.__call__ = function(b) {
+    if (js(b)) {
+        return True;
+    } else {
+        return False;
+    }
+};
+

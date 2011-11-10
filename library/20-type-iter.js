@@ -49,7 +49,7 @@ var __iter_real__ = iter.__call__;
 
 iter.__call__ = function(obj) {
     if (defined(obj.__iter__)) {
-        return obj.__iter__();
+        return obj.__iter__.__call__();
     } else {
         return __iter_real__(obj);
     }
@@ -59,7 +59,7 @@ iter.prototype.__str__ = function () {
     return str.__call__("<iterator of " + this._seq + " at " + this._index + ">");
 };
 
-iter.prototype.next = Function(function() {
+iter.prototype.next = function() {
     var value = this._seq[this._index++];
 
     if (defined(value)) {
@@ -67,4 +67,4 @@ iter.prototype.next = Function(function() {
     } else {
         throw py_builtins.StopIteration.__call__('no more items');
     }
-});
+};

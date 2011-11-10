@@ -28,7 +28,6 @@
 var tuple = __inherit(object, "tuple");
 
 tuple.prototype.__init__ = function(seq) {
-
     if (arguments.length > 1) {
         throw py_builtins.TypeError.__call__("tuple() takes at most 1 argument (" + arguments.length + " given)");
     } else if (!defined(seq)) {
@@ -48,13 +47,13 @@ tuple.prototype.__init__ = function(seq) {
 };
 
 tuple.prototype.__str__ = function () {
-    if (js(this.__len__()) === 0) {
+    if (js(this.__len__.__call__()) === 0) {
         return str.__call__("()");
-    } else if (js(this.__len__()) == 1) {
+    } else if (js(this.__len__.__call__()) == 1) {
         return str.__call__("(" + str.__call__(this._items[0]) + ",)");
     } else {
         var items = map(function (i) {return str.__call__(i);}, this._items);
-        return str.__call__("(" + str.__call__(", ").join(items) + ")");
+        return str.__call__("(" + str.__call__(", ").join.__call__(items) + ")");
     }
 };
 
@@ -66,7 +65,7 @@ tuple.prototype.__eq__ = function (other) {
             return False;
         }
         for (var i = 0; i < js(len(this)); i++) {
-            if (js(this._items[i].__ne__(other._items[i]))) {
+            if (js(this._items[i].__ne__.__call__(other._items[i]))) {
                 return False;
             }
         }
@@ -90,7 +89,7 @@ tuple.prototype._js_ = function () {
 
 tuple.prototype.__hash__ = function () {
     var value = 0x345678;
-    var length = js(this.__len__());
+    var length = js(this.__len__.__call__());
 
     for (var index in this._items) {
         value = ((1000003*value) & 0xFFFFFFFF) ^ hash(this._items[index]);
@@ -127,23 +126,23 @@ tuple.prototype.__getitem__ = function(index) {
     var seq;
     if (js(isinstance.__call__(index, slice))) {
         var s = index;
-        var inds = js(s.indices(len(this)));
+        var inds = js(s.indices.__call__(len(this)));
         var start = inds[0];
         var stop = inds[1];
         var step = inds[2];
         seq = [];
         for (var i = js(start); i < js(stop); i += js(step)) {
-            seq.push(this.__getitem__(i));
+            seq.push(this.__getitem__.__call__(i));
         }
         return this.__class__.__call__(seq);
     } else {
         if (!js(isinstance.__call__(index, _int)))
             index = _int.__call__(index);
 
-        if (js(index.__ge__(_int.__call__(0)).__and__(index.__lt__(len(this))))) {
-            return this._items[index.__int__()];
-        } else if (js(index.__lt__(_int.__call__(0)).__and__(index.__ge__(len(this).__neg__())))) {
-            return this._items[index.__add__(len(this)).__int__()];
+        if (js(index.__ge__.__call__($c0).__and__.__call__(index.__lt__.__call__(len(this))))) {
+            return this._items[index.__int__.__call__()];
+        } else if (js(index.__lt__.__call__($c0).__and__.__call__(index.__ge__.__call__(len(this).__neg__.__call__())))) {
+            return this._items[index.__add__.__call__(len(this)).__int__.__call__()];
         } else {
             throw py_builtins.IndexError.__call__("list index out of range");
         }
@@ -158,19 +157,19 @@ tuple.prototype.__delitem__ = function(index) {
     throw py_builtins.TypeError.__call__("'tuple' object doesn't support item deletion");
 };
 
-tuple.prototype.count = Function(function(value) {
+tuple.prototype.count = function(value) {
     var count = 0;
 
     for (var index in this._items) {
-        if (js(this._items[index].__eq__(value))) {
+        if (js(this._items[index].__eq__.__call__(value))) {
             count += 1;
         }
     }
 
     return count;
-});
+};
 
-tuple.prototype.index = Function(function(value, start, end) {
+tuple.prototype.index = function(value, start, end) {
     if (!defined(start)) {
         start = 0;
     }
@@ -182,10 +181,10 @@ tuple.prototype.index = Function(function(value, start, end) {
             break;
         }
 
-        if (js(_value.__eq__(value))) {
+        if (js(_value.__eq__.__call__(value))) {
             return i;
         }
     }
 
     throw py_builtins.ValueError.__call__("tuple.index(x): x not in list");
-});
+};

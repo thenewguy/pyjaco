@@ -40,10 +40,6 @@ number.prototype.__eq__ = function (other) {
     return bool.__call__(this._obj === other._obj);
 };
 
-number.prototype.toString = function () {
-    return js(this.__str__());
-};
-
 number.prototype._js_ = function () {
     return this._obj;
 };

@@ -26,13 +26,6 @@
 var none = __inherit(object, "none");
 
 none.prototype.__init__ = function(b) {
-    this._obj = null;
-};
-
-var None = none.__call__();
-
-none.__call__ = function() {
-    return None;
 };
 
 var __py2jsnone = none;
@@ -42,7 +35,7 @@ none.prototype.__str__ = function () {
 };
 
 none.prototype.toString = function () {
-    return "";
+    return "None";
 };
 
 none.prototype.__repr__ = none.prototype.__str__;
@@ -53,12 +46,12 @@ none.prototype.__eq__ = function (other) {
     } else if (other === null) {
         return True;
     } else {
-        return bool.__call__(this._obj === other._obj);
+        return other === None;
     }
 };
 
 none.prototype._js_ = function () {
-    return this._obj;
+    return null;
 };
 
 none.prototype.__nonzero__ = function() {
@@ -71,4 +64,10 @@ none.prototype.__and__ = function(x) {
 
 none.prototype.__or__ = function(x) {
     return x;
+};
+
+var None = none.__call__();
+
+none.__call__ = function() {
+    return None;
 };

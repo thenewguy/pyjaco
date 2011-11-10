@@ -48,7 +48,7 @@ var setattr = Function(function(obj, name, value) {
 
 var hash = Function(function(obj) {
     if (hasattr(obj, '__hash__')) {
-        return obj.__hash__();
+        return obj.__hash__.__call__();
     } else if (typeof(obj) === 'number') {
         return obj === -1 ? -2 : obj;
     } else {
@@ -58,7 +58,7 @@ var hash = Function(function(obj) {
 
 var len = Function(function(obj) {
     if (hasattr(obj, '__len__')) {
-        return obj.__len__();
+        return obj.__len__.__call__();
     } else {
         throw py_builtins.AttributeError.__call__('__len__');
     }
@@ -67,7 +67,7 @@ var len = Function(function(obj) {
 var dir = Function(function(obj) {
     var res = list.__call__();
     for (var i in obj) {
-        res.append.call(res, __py2js_str.__call__(i));
+        res.append.__call__(__py2js_str.__call__(i));
     }
     return res;
 });
@@ -76,9 +76,9 @@ var repr = Function(function(obj) {
     if (!defined(obj)) {
         return "None";
     } else if (hasattr(obj, '__repr__')) {
-        return obj.__repr__.call(obj);
+        return obj.__repr__.__call__(obj);
     } else if (hasattr(obj, '__str__')) {
-        return obj.__str__.call(obj);
+        return obj.__str__.__call__(obj);
     } else if (hasattr(obj, 'toString')) {
         return obj.toString();
     } else {
@@ -133,7 +133,7 @@ var map = Function(function() {
     var items = list.__call__();
 
     iterate(seq, function(item) {
-        items.append(func(item));
+        items.append.__call__(func(item));
     });
 
     if (py_builtins.__python3__)
@@ -151,7 +151,7 @@ var zip = Function(function() {
     var i;
 
     for (i = 0; i < arguments.length; i++) {
-        iters.append(iter.__call__(arguments[i]));
+        iters.append.__call__(iter.__call__(arguments[i]));
     }
 
     var items = list.__call__();
@@ -161,7 +161,7 @@ var zip = Function(function() {
 
         for (i = 0; i < arguments.length; i++) {
             try {
-                var value = iters.__getitem__(i).next();
+                var value = iters.__getitem__.__call__(i).next.__call__();
             } catch (exc) {
                 if (js(isinstance.__call__(exc, py_builtins.StopIteration))) {
                     return items;
@@ -170,24 +170,24 @@ var zip = Function(function() {
                 }
             }
 
-            item.append(value);
+            item.append.__call__(value);
         }
 
-        items.append(tuple.__call__(item));
+        items.append.__call__(tuple.__call__(item));
     }
     return None;
 });
 
 var isinstance = Function(function(obj, cls) {
     if (cls.__class__ === tuple) {
-        var length = cls.__len__();
+        var length = cls.__len__.__call__();
 
-        if (js(length.__eq__($c0))) {
+        if (js(length.__eq__.__call__($c0))) {
             return False;
         }
 
         for (var i = 0; i < length; i++) {
-            var _cls = cls.__getitem__(i);
+            var _cls = cls.__getitem__.__call__(i);
 
             if (js(isinstance.__call__(obj, _cls))) {
                 return True;
@@ -208,7 +208,7 @@ var isinstance = Function(function(obj, cls) {
 
 py_builtins.bool = function(a) {
     if ((a !== null) && defined(a.__bool__)) {
-        return a.__bool__();
+        return a.__bool__.__call__();
     } else {
         if (a) {
             return True;
@@ -220,9 +220,9 @@ py_builtins.bool = function(a) {
 
 py_builtins.eq = function(a, b) {
     if ((a != null) && defined(a.__eq__))
-        return a.__eq__(b);
+        return a.__eq__.__call__(b);
     else if ((b != null) && defined(b.__eq__))
-        return b.__eq__(a);
+        return b.__eq__.__call__(a);
     else
         return bool.__call__(a === b);
 };
@@ -246,9 +246,9 @@ py_builtins._int = Function(function(value) {
 
 py_builtins.__not__ = Function(function(obj) {
    if (hasattr(obj, '__nonzero__')) {
-       return py_builtins.bool(!js(obj.__nonzero__()));
+       return py_builtins.bool(!js(obj.__nonzero__.__call__()));
    } else if (hasattr(obj, '__len__')) {
-       return py_builtins.bool(js(obj.__len__()) === 0);
+       return py_builtins.bool(js(obj.__len__.__call__()) === 0);
    } else {
        return py_builtins.bool(!js(obj));
    }
@@ -276,13 +276,13 @@ py_builtins._float = Function(function(value) {
 });
 
 py_builtins.max = Function(function(list) {
-    if (js(len(list).__eq__($c0)))
+    if (js(len(list).__eq__.__call__($c0)))
         throw py_builtins.ValueError.__call__("max() arg is an empty sequence");
     else {
         var result = null;
 
         iterate(iter.__call__(list), function(item) {
-                if ((result === null) || js(item.__gt__(result)))
+                if ((result === null) || js(item.__gt__.__call__(result)))
                     result = item;
         });
 
@@ -291,13 +291,13 @@ py_builtins.max = Function(function(list) {
 });
 
 py_builtins.min = Function(function(list) {
-    if (js(len(list).__eq__($c0)))
+    if (js(len(list).__eq__.__call__($c0)))
         throw py_builtins.ValueError.__call__("min() arg is an empty sequence");
     else {
         var result = null;
 
         iterate(iter.__call__(list), function(item) {
-                if ((result === null) || js(item.__lt__(result)))
+                if ((result === null) || js(item.__lt__.__call__(result)))
                     result = item;
         });
 
@@ -327,7 +327,7 @@ py_builtins.print = function(s) {
             }
         } else {
             var args = tuple.__call__(Array.prototype.slice.call(arguments, 0));
-            print(__py2js_str.__call__(" ").join(args));
+            print(__py2js_str.__call__(" ").join.__call__(args));
         }
     }
 };
@@ -335,8 +335,8 @@ py_builtins.print = function(s) {
 py_builtins.filter = Function(function(f, l) {
    var res = list.__call__();
    iterate(iter.__call__(l), function(item) {
-     if (py_builtins.bool(f(item))) {
-       res.append(item);
+     if (js(py_builtins.bool(f.__call__(item)))) {
+       res.append.__call__(item);
      }
    });
    return res;
@@ -357,11 +357,11 @@ py_builtins.reduce = Function(function(func, seq) {
         accum = initial;
         start = 0;
     } else {
-        accum = func(seq.__getitem__(0), seq.__getitem__(1));
+        accum = func(seq.__getitem__.__call__(0), seq.__getitem__.__call__(1));
         start = 2;
     }
     for (var i = start; i < len(seq); i++) {
-        accum = func(accum, seq.__getitem__(i));
+        accum = func(accum, seq.__getitem__.__call__(i));
     }
     return accum;
 });
