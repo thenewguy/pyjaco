@@ -63,16 +63,16 @@ def put_file_version(version):
 def get_repo_version():
     """
         Repo tags are assumed to be in the format:
-            vMajor.Minor
+            Major.Minor
         
         Example:
-            v0.1
+            0.1
         
         Function returns a version string of the form:
-            vMajor.Minor.PatchHash
+            Major.Minor.Patch+CommitHash
         
         Example:
-            v0.1.1gc58ec0d
+            0.1.1+c58ec0d
     """
     try:
         p = Popen([GIT_EXECUTABLE, 'describe'], stdout=PIPE, stderr=PIPE)
@@ -81,7 +81,7 @@ def get_repo_version():
         if parts:
             version = "%s.%s" % (parts[0],parts[1])
             if len(parts) > 2:
-                version = "%s.%s%s" % (version,parts[2],parts[3])
+                version = "%s.%s+%s" % (version,parts[2],parts[3][1:])
             else:
                 version = "%s.0" % version
         else:
@@ -93,11 +93,11 @@ def get_repo_version():
 def parse_version(version):
     """
         input version string of the form:
-            'vMajor.Minor.PatchHash'
+            'Major.Minor.Patch+CommitHash'
         like:
-            'v0.1.5g95ffef4'
+            '0.1.5+95ffef4'
             ------ or ------
-            'v0.1.0'
+            '0.1.0'
             
         returns version_info tuple of the form:
             (major,minor,patch,hash)
@@ -107,7 +107,7 @@ def parse_version(version):
             (0, 1, 0, '')
     """
     matches = match(
-        'v(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+)(g(?P<hash>[a-z0-9]*))?',
+        '(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+)(g(?P<hash>[a-z0-9]*))?',
         version,
         IGNORECASE
     )
@@ -118,7 +118,7 @@ def parse_version(version):
         hash = matches.group('hash') or ''
         return (major,minor,patch,hash)
     else:
-        raise ValueError("Version string, '%s' could not be parsed.  It should be of the form: 'vMajor.Minor.PatchHash'." % version)
+        raise ValueError("Version string, '%s' could not be parsed.  It should be of the form: 'Major.Minor.Patch+CommitHash'." % version)
 
 if __name__ == '__main__':
     print get_version()
