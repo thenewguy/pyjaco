@@ -76,7 +76,10 @@ class Compiler(object):
         compiler_opts = dict()
         compiler_opts.update(defaults)
         compiler_opts.update(opts)
-        self.compiler = pyjaco.compiler.multiplexer.Compiler(jsvars, compiler_opts)
+        
+        self.shared_state = {}
+        
+        self.compiler = pyjaco.compiler.multiplexer.Compiler(jsvars, compiler_opts, shared_state = self.shared_state)
         self.buffer = None
         self.reset()
 

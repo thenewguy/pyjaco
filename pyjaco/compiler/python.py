@@ -74,8 +74,8 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         "LtE": "le",
     }
 
-    def __init__(self, opts):
-        super(Compiler, self).__init__(opts)
+    def __init__(self, opts, **kwargs):
+        super(Compiler, self).__init__(opts, **kwargs)
         self.future_division = False
         self.opts = opts
         self._funcs = []

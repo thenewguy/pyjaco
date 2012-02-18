@@ -69,8 +69,8 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             'IsNot' : "is not", # Not implemented yet
     }
 
-    def __init__(self, opts):
-        super(Compiler, self).__init__(opts)
+    def __init__(self, opts, **kwargs):
+        super(Compiler, self).__init__(opts, **kwargs)
         self.name_map = self.name_map.copy()
         self.name_map.update({"True": "true", "False": "false", "None": "null"})
         self.opts = opts

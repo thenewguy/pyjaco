@@ -44,7 +44,7 @@ class BaseCompiler(object):
     import __builtin__
     builtin = set([x for x in dir(__builtin__) if not x.startswith("__")])
 
-    def __init__(self, opts):
+    def __init__(self, opts, **kwargs):
         self.index_var = 0
         # This is the name of the classes that we are currently in:
         self._class_name = []
@@ -54,6 +54,7 @@ class BaseCompiler(object):
         self._classes = {}
         self._exceptions = []
         self.opts = opts
+        self.shared_state = kwargs["shared_state"]
 
     def alloc_var(self):
         self.index_var += 1

@@ -53,10 +53,10 @@ def dump(node):
 
 class Compiler(pyjaco.compiler.BaseCompiler):
 
-    def __init__(self, jsvars, opts):
-        super(Compiler, self).__init__(opts)
-        self.comp_py = pyjaco.compiler.python.Compiler(opts)
-        self.comp_js = pyjaco.compiler.javascript.Compiler(opts)
+    def __init__(self, jsvars, opts, **kwargs):
+        super(Compiler, self).__init__(opts, **kwargs)
+        self.comp_py = pyjaco.compiler.python.Compiler(opts, **kwargs)
+        self.comp_js = pyjaco.compiler.javascript.Compiler(opts, **kwargs)
 
         self.visit_py = self.comp_py.visit
         self.visit_js = self.comp_js.visit
