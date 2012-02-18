@@ -161,6 +161,9 @@ class Compiler(object):
         filename = path[len(commonprefix):].lstrip('/')
         dotted = os.path.splitext(filename)[0].replace('/', '.')
         
+        # make the module name available to the compilers
+        self.shared_state["module"] = dotted
+        
         # buffer the module definition
         self.comment_section(dotted)
         self.buffer.write("$PY.modules['%s'] = (function() {" % dotted)
