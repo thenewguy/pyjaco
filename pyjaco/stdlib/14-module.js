@@ -23,6 +23,8 @@
   OTHER DEALINGS IN THE SOFTWARE.
 **/
 
+$PY.modules = {};
+
 var module = __inherit(object, "module");
 
 module.PY$__init__ = function(modname, filename, objects) {
