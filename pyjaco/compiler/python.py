@@ -214,7 +214,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             )
 
         self._class_name.append(class_name)
-        heirar = ".PY$".join(self._class_name + [])
+        heirar = self.build_ref(self._class_name)
         for stmt in node.body:
             if isinstance(stmt, ast.Assign):
                 value = self.visit(stmt.value)

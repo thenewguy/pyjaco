@@ -62,7 +62,12 @@ class BaseCompiler(object):
     
     def build_ref(self, name):
         if self.module:
-            return ".PY$".join([self.module, name])
+            pieces = [self.module]
+            if isinstance(name, basestring):
+                pieces.append(name)
+            else:
+                pieces.extend(name)
+            return ".PY$".join(pieces)
         else:
             return name
 
