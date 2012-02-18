@@ -32,6 +32,7 @@ import re
 import StringIO
 import ast
 import inspect
+import os
 try:
     from _version import get_version, parse_version
 except ImportError:
@@ -146,8 +147,52 @@ class Compiler(object):
     def append_class(self, code, name = None):
         self.append_string(inspect.getsource(code), name)
 
-    def append_module(self, module, classes, name = None):
-        self.append_raw(self.compile_module(module, classes, name))
+    def append_module(self, path, base = None):
+        # determine module name characteristics
+        path = os.path.abspath(path)
+        if base is None:
+            base = os.getcwd()
+        base = os.path.abspath(base)
+        commonprefix = os.path.commonprefix([path, base])
+        path, base, commonprefix = [x.replace('\\','/') for x in (path, base, commonprefix)]
+        filename = path[len(commonprefix):].lstrip('/')
+        dotted = os.path.splitext(filename)[0].replace('/', '.')
+        
+        # buffer the module definition
+        self.comment_section(dotted)
+        self.buffer.write("$PY.modules['%s'] = (function() {" % dotted)
+        self.buffer.write("\n")
+        
+        # mimic module structure inside the definition
+        hierarchy = []
+        pieces = "%s." % dotted
+        while pieces and pieces.count('.'):
+            pieces = os.path.splitext(pieces)[0]
+            hierarchy.insert(0,"    %s = {};" % pieces)
+        hierarchy[0] = "    var %s = {};" % pieces
+        
+        self.buffer.write("\n".join(hierarchy))
+        self.buffer.write("\n")
+        
+        # compile and buffer the code
+        with open(path, "r") as f:
+            code = f.read()
+        
+        compiled = ["    " + stmt for stmt in self.compiler.visit(ast.parse(code))]
+        self.buffer.write("\n".join(compiled))
+        self.buffer.write("\n")
+        
+        # output javascript that actually implements the module
+        self.buffer.write("    return module('%s', '%s', %s);" % (
+                dotted,
+                filename,
+                dotted
+            )
+        )
+        self.buffer.write("\n")
+        self.buffer.write("})")
+        self.buffer.write("\n\n")
+        
 
     def append_data(self, key, value, name = None):
         self.append_raw(self.compile_data(key, value))
