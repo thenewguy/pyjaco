@@ -56,6 +56,16 @@ class BaseCompiler(object):
         self.opts = opts
         self.shared_state = kwargs["shared_state"]
 
+    @property
+    def module(self):
+        return self.shared_state.get("module", "")
+    
+    def build_ref(self, name):
+        if self.module:
+            return ".PY$".join([self.module, name])
+        else:
+            return name
+
     def alloc_var(self):
         self.index_var += 1
         return "$v%d" % self.index_var
