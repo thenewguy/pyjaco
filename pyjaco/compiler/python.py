@@ -78,7 +78,6 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         super(Compiler, self).__init__(opts, **kwargs)
         self.future_division = False
         self.opts = opts
-        self._funcs = []
 
     def stack_destiny(self, names, skip):
         for name in reversed(self.stack[:-skip]):
