@@ -72,7 +72,13 @@ def compile_file(infile, outfile, options):
         outfile.write('load("py-builtins.js");\n')
 
     c = Compiler()
-    c.append_string(infile.read())
+    if options.as_module:
+        kwargs = {}
+        if options.module_base:
+            kwargs["base"] = options.module_base
+        c.append_module(infile.read(), infile.name, **kwargs)
+    else:
+        c.append_string(infile.read())
     outfile.write(str(c))
 
 def run_once(input_filenames, options):
@@ -230,6 +236,18 @@ def main():
             dest = "watch",
             default = False,
             help = "Watch the input files for changes and recompile. If the input file is a single file, watch it for changes and recompile. If a directory, recompile if any .py or .pyjaco files in the directory have changes.")
+
+    parser.add_option("-m", "--as-module",
+            action = "store_true",
+            dest = "as_module",
+            default = False,
+            help = "Compile code as a module.")
+    
+    parser.add_option("--base",
+            action = "store",
+            dest   = "module_base",
+            default = None,
+            help   = "base path used to calculate dotted path for module")
 
     options, args = parser.parse_args()
 
