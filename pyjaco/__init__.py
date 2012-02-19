@@ -150,7 +150,7 @@ class Compiler(object):
     def append_class(self, code, name = None):
         self.append_string(inspect.getsource(code), name)
 
-    def append_module(self, path, base = None):
+    def append_module(self, code, path, base = None):
         # determine module name characteristics
         path = os.path.abspath(path)
         if base is None:
@@ -181,9 +181,6 @@ class Compiler(object):
         self.buffer.write("\n")
         
         # compile and buffer the code
-        with open(path, "r") as f:
-            code = f.read()
-        
         compiled = ["    " + stmt for stmt in self.compiler.visit(ast.parse(code))]
         self.buffer.write("\n".join(compiled))
         self.buffer.write("\n")
