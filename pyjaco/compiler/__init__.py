@@ -97,7 +97,7 @@ class BaseCompiler(object):
         return chain(*chain(self._vars_stack, self._classes_stack, self._exceptions_stack, self._funcs_stack))
     
     @property
-    def scope(self, name):
+    def scope(self):
         return chain(self.local_scope, self.global_scope)
 
     @property
