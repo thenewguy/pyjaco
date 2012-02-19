@@ -89,7 +89,11 @@ class Compiler(pyjaco.compiler.BaseCompiler):
     def visit_Name(self, node):
         name = self.name_map.get(node.id, node.id)
 
-        if (name in self.builtin) and not ((name in self._vars) or (name in self._funcs)):
+        if name in self.local_scope:
+            pass
+        elif self.build_ref(name) in self.global_scope:
+            name = self.build_ref(name)
+        elif name in self.builtin:
             name = "__builtins__.PY$" + name
 
         return name
@@ -122,19 +126,20 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         else:
             offset = 0
 
-        self._funcs.append(node.name)
-        self.push_scope()
-
-        self._vars = [arg.id for arg in node.args.args]
-
         inclass = self.stack_destiny(["ClassDef", "FunctionDef"], 2) in ["ClassDef"]
 
         if inclass:
             js = ["function() {"]
         elif self.module:
             js = ["%s = function() {" % self.build_ref(node.name)]
+            self._funcs.append(self.build_ref(node.name))
         else:
             js = ["var %s = function() {" % (node.name)]
+            self._funcs.append(node.name)
+
+        self.push_scope()
+
+        self._vars = [arg.id for arg in node.args.args]
 
         if inclass or offset == 1:
             js.extend(self.indent(["var self = this;"]))
@@ -200,8 +205,9 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             raise JSError("Multiple inheritance not supported")
 
         class_name = node.name
+        class_ref = self.build_ref(class_name)
         #self._classes remembers all classes defined
-        self._classes[class_name] = node
+        self._classes[class_ref] = node
 
         use_prototypes = "false" if any([isinstance(x, ast.FunctionDef) and x.name == "__call__" for x in node.body]) else "true"
         if len(self._class_name) > 0:
@@ -209,7 +215,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         else:
             js.append("%s%s = __inherit(%s, '%s', %s);" % (
                     "" if self.module else "var ",
-                    self.build_ref(class_name),
+                    class_ref,
                     bases[0],
                     class_name,
                     use_prototypes
@@ -280,11 +286,13 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         else:
             if isinstance(target, ast.Name):
                 var = target.id
-                if not (var in self._vars):
+                if self.scope_is_global:
+                    var = self.build_ref(var)
+                declare = ""
+                if not var in self.local_scope:
                     self._vars.append(var)
-                    declare = "var "
-                else:
-                    declare = ""
+                    if not self.module or not var.startswith(self.module):
+                        declare = "var "
                 js = ["%s%s = %s;" % (declare, var, value)]
             elif isinstance(target, ast.Attribute):
                 js = ["%s.PY$__setattr__('%s', %s);" % (self.visit(target.value), str(target.attr), value)]
