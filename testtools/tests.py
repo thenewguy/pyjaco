@@ -64,7 +64,7 @@ def create_cases():
                     )
                 )
             
-    test_paths = glob.glob("tests/modules/*/*.py")
+    test_paths = glob.glob("tests/modules/simple/*.py")
     test_paths.sort()
     for test_path in test_paths:
         test_cases.addTest(
