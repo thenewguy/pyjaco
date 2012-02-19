@@ -31,6 +31,7 @@ import ast
 import pyjaco.compiler
 from pyjaco.compiler import JSError
 from pyjaco.compiler.multiplexer import dump
+from utils import special_globals
 
 class Compiler(pyjaco.compiler.BaseCompiler):
 
@@ -88,14 +89,16 @@ class Compiler(pyjaco.compiler.BaseCompiler):
 
     def visit_Name(self, node):
         name = self.name_map.get(node.id, node.id)
-
-        if name in self.local_scope:
+        
+        if name in special_globals.keys():
             pass
-        elif self.build_ref(name) in self.global_scope:
+        elif name in self.local_scope:
+            pass
+        elif self.build_ref(name) in self.scope:
             name = self.build_ref(name)
         elif name in self.builtin:
             name = "__builtins__.PY$" + name
-
+            
         return name
 
     def visit_Return(self, node):

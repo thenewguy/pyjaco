@@ -37,6 +37,7 @@ try:
     from _version import get_version, parse_version
 except ImportError:
     from .._version import get_version, parse_version
+from compiler.utils import special_globals 
 
 __version__ = get_version()
 __version_info__ = parse_version(__version__)
@@ -46,14 +47,6 @@ def compile_string(script, jsvars = None):
     comp = Compiler(jsvars)
     comp.append_string(script)
     return str(comp)
-
-special_globals = {
-    "__name__": None,
-    "__file__": None,
-    "__loader__": None,
-    "__package__": None,
-    "__builtins__": None
-}
 
 class Compiler(object):
     """
