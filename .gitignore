@@ -7,6 +7,9 @@ tests/*/*.err
 tests/*/*.py.js
 tests/*.err
 tests/*.out
+tests/modules/simple/*
+!tests/modules/simple/*.py
+
 .d8_history
 
 # Packages

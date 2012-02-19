@@ -63,6 +63,19 @@ def create_cases():
                         )
                     )
                 )
+            
+    test_paths = glob.glob("tests/modules/*/*.py")
+    test_paths.sort()
+    for test_path in test_paths:
+        test_cases.addTest(
+            unittest.TestLoader().loadTestsFromTestCase(
+                util.compile_as_module_and_run_file_test(
+                    test_path, 
+                    os.path.basename(test_path)
+                    )
+                )
+            )
+        
     return test_cases , failing_test_cases
 
 NOT_KNOWN_TO_FAIL, KNOWN_TO_FAIL = create_cases()

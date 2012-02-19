@@ -169,3 +169,86 @@ def compile_and_run_file_failing_test(*a, **k):
 
     return FailingTest
 
+def compile_as_module_and_run_file_test(file_path, file_name=None):
+    """Creates a test that compiles as a module and runs the python file as js"""
+    file_name = file_name if file_name else file_path
+
+    class CompileAsModuleAndRunFile(unittest.TestCase):
+        """Tests that a file can be compiled and run as js"""
+        templ = {
+        "py_executable": sys.executable,
+        "py_path": file_path, 
+        "py_run_file": file_path + ".run",
+        "py_unix_path": get_posix_path(file_path),
+        "py_out_path": file_path + ".out",
+        "js_path": file_path + ".js",
+        "js_run_file": file_path + ".js.run",
+        "js_out_path": file_path + ".js.out",
+        "py_error": file_path + ".err",
+        "js_error": file_path + ".js.err",
+        "compiler_error": file_path + ".comp.err",
+        "name": file_name,
+        }
+        def reportProgres(self):
+            """Should be overloaded by the test result class"""
+
+        def runTest(self):
+            """The actual test goes here."""
+            mtime_src = os.path.getmtime(self.templ['py_path'])
+            try:
+                mtime_py_res = os.path.getmtime(self.templ['py_out_path'])
+            except OSError:
+                mtime_py_res = 0
+            python_command = (
+                '%(py_executable)s "%(py_run_file)s" > "%(py_out_path)s" 2> '
+                '"%(py_error)s"'
+                ) % self.templ
+
+            try:
+                mtime_js_res = os.path.getmtime(self.templ['js_path'])
+            except OSError:
+                mtime_js_res = 0
+            compile_command = (
+                '%(py_executable)s pyjs.py -I -q -m '
+                '"%(py_path)s" > "%(js_path)s" 2> '
+                '"%(compiler_error)s"'
+                ) % self.templ 
+            
+            javascript_command = (
+                'js -f "%(js_path)s" -f "%(js_run_file)s" > "%(js_out_path)s" 2> '
+                '"%(js_error)s"' 
+                ) % self.templ
+
+            # create python run file
+            with open(self.templ['py_run_file'], 'w') as f:
+                with open(self.templ['py_path'], 'r') as p:
+                    f.write(p.read())
+                    f.write("\n")
+                    f.write("run()")
+            
+            # create javascript run file
+            with open(self.templ['js_run_file'], 'w') as f:
+                dotted = os.path.splitext(self.templ['py_path'])[0].replace("\\","/").replace("/",".")
+                f.write("\n")
+                f.write("$PY.modules['%s']().PY$run();" % dotted)
+
+            commands = []
+            if mtime_py_res < mtime_src:
+                commands.append(python_command)
+            if mtime_js_res < mtime_src:
+                commands.append(compile_command)
+            commands.append(javascript_command)
+
+            for cmd in commands:
+                self.assertEqual(0, run_command(cmd))
+                self.reportProgres()
+            self.assertEqual(
+                file(self.templ["py_out_path"]).readlines(),
+                file(self.templ["js_out_path"]).readlines()
+                )
+            self.reportProgres()
+
+        def __str__(self):
+            return "%(py_unix_path)s: " % self.templ
+
+    return CompileAsModuleAndRunFile

@@ -131,6 +131,8 @@ class Compiler(pyjaco.compiler.BaseCompiler):
 
         if inclass:
             js = ["function() {"]
+        elif self.module:
+            js = ["%s = function() {" % self.build_ref(node.name)]
         else:
             js = ["var %s = function() {" % (node.name)]
 

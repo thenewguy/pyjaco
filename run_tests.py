@@ -16,6 +16,7 @@ should_remove_suffixes = (
         ".py.js.err",
         ".py.comp.err",
         ".pyc",
+        ".run",
     )
 should_remove_files = (
     "tests/test_builtins.js.err",
