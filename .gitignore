@@ -7,8 +7,8 @@ tests/*/*.err
 tests/*/*.py.js
 tests/*.err
 tests/*.out
-tests/modules/simple/*
-!tests/modules/simple/*.py
+tests/as_module/*/*
+!tests/as_module/*/*.py
 
 .d8_history
 

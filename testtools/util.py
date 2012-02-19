@@ -178,7 +178,6 @@ def compile_as_module_and_run_file_test(file_path, file_name=None):
         templ = {
         "py_executable": sys.executable,
         "py_path": file_path, 
-        "py_run_file": file_path + ".run",
         "py_unix_path": get_posix_path(file_path),
         "py_out_path": file_path + ".out",
         "js_path": file_path + ".js",
@@ -200,7 +199,7 @@ def compile_as_module_and_run_file_test(file_path, file_name=None):
             except OSError:
                 mtime_py_res = 0
             python_command = (
-                '%(py_executable)s "%(py_run_file)s" > "%(py_out_path)s" 2> '
+                '%(py_executable)s "%(py_path)s" > "%(py_out_path)s" 2> '
                 '"%(py_error)s"'
                 ) % self.templ
 
@@ -219,18 +218,11 @@ def compile_as_module_and_run_file_test(file_path, file_name=None):
                 '"%(js_error)s"' 
                 ) % self.templ
 
-            # create python run file
-            with open(self.templ['py_run_file'], 'w') as f:
-                with open(self.templ['py_path'], 'r') as p:
-                    f.write(p.read())
-                    f.write("\n")
-                    f.write("run()")
-            
             # create javascript run file
             with open(self.templ['js_run_file'], 'w') as f:
                 dotted = os.path.splitext(self.templ['py_path'])[0].replace("\\","/").replace("/",".")
                 f.write("\n")
-                f.write("$PY.modules['%s']().PY$run();" % dotted)
+                f.write("$PY.run_module('%s', '__main__')" % dotted)
 
             commands = []
             if mtime_py_res < mtime_src:
