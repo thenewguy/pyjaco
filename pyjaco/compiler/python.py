@@ -89,7 +89,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
     def visit_Name(self, node):
         name = self.name_map.get(node.id, node.id)
 
-        if (name in self.builtin) and not ((name in self._scope) or (name in self._funcs)):
+        if (name in self.builtin) and not ((name in self._vars) or (name in self._funcs)):
             name = "__builtins__.PY$" + name
 
         return name
@@ -101,7 +101,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             return ["return None;"]
 
     def visit_Global(self, node):
-        self._scope.extend(node.names)
+        self._vars.extend(node.names)
         return []
 
     def visit_FunctionDef(self, node):
@@ -125,7 +125,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         self._funcs.append(node.name)
         self.push_scope()
 
-        self._scope = [arg.id for arg in node.args.args]
+        self._vars = [arg.id for arg in node.args.args]
 
         inclass = self.stack_destiny(["ClassDef", "FunctionDef"], 2) in ["ClassDef"]
 
@@ -265,8 +265,8 @@ class Compiler(pyjaco.compiler.BaseCompiler):
                 var = self.visit(target)
                 declare = ""
                 if isinstance(target, ast.Name):
-                    if not (var in self._scope):
-                        self._scope.append(var)
+                    if not (var in self._vars):
+                        self._vars.append(var)
                         declare = "var "
                 js.append("%s%s = %s.PY$__getitem__(%d);" % (declare, var, dummy, i))
         elif isinstance(target, ast.Subscript) and isinstance(target.slice, ast.Index):
@@ -278,8 +278,8 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         else:
             if isinstance(target, ast.Name):
                 var = target.id
-                if not (var in self._scope):
-                    self._scope.append(var)
+                if not (var in self._vars):
+                    self._vars.append(var)
                     declare = "var "
                 else:
                     declare = ""
