@@ -61,6 +61,8 @@ class BaseCompiler(object):
         self._exceptions_stack = []
         self._funcs_stack = []
         
+        self._scope_level = 0
+        
         self.opts = opts
         self.shared_state = kwargs["shared_state"]
 
@@ -73,25 +75,30 @@ class BaseCompiler(object):
         self._classes = {}
         self._exceptions_stack.append(self._exceptions)
         self._exceptions = []
+        self._scope_level += 1
     
     def pop_scope(self):
         self._vars = self._vars_stack.pop()
         self._funcs = self._funcs_stack.pop()
         self._classes = self._classes_stack.pop()
         self._exceptions = self._exceptions_stack.pop()
+        self._scope_level -= 1
     
-    def in_local_scope(self, name):
-        if name in chain(self._vars, self._funcs, self._classes, self._exceptions):
-            return True
-        return False
+    @property
+    def scope_is_global(self):
+        return not self._scope_level
     
-    def in_global_scope(self, name):
-        if name in chain(*chain(self._vars_stack, self._classes_stack, self._exceptions_stack, self._funcs_stack)):
-            return True
-        return False
+    @property
+    def local_scope(self):
+        return chain(self._vars, self._funcs, self._classes, self._exceptions)
     
-    def in_scope(self, name):
-        return self.in_local_scope(name) or self.in_global_scope(name)
+    @property
+    def global_scope(self):
+        return chain(*chain(self._vars_stack, self._classes_stack, self._exceptions_stack, self._funcs_stack))
+    
+    @property
+    def scope(self, name):
+        return chain(self.local_scope, self.global_scope)
 
     @property
     def module(self):
