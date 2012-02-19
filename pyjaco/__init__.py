@@ -47,6 +47,14 @@ def compile_string(script, jsvars = None):
     comp.append_string(script)
     return str(comp)
 
+special_globals = {
+    "__name__": None,
+    "__file__": None,
+    "__loader__": None,
+    "__package__": None,
+    "__builtins__": None
+}
+
 class Compiler(object):
     """
     pyjaco. A python-to-javascript compiler
@@ -168,6 +176,20 @@ class Compiler(object):
         self.comment_section(dotted)
         self.buffer.write("$PY.modules['%s'] = (function() {" % dotted)
         self.buffer.write("\n")
+        
+        # prepare to accept "special global variables"
+        # http://docs.python.org/library/runpy.html#runpy.run_module
+        kws = "__module_kwargs__"
+        self.buffer.write("    var %s = __kwargs_get(arguments);" % kws)
+        self.buffer.write("\n")
+        for key, val in special_globals.iteritems():
+            self.buffer.write("    var %(key)s = ('%(key)s' in %(kws)s) ? %(kws)s['%(key)s'] : %(val)s;" % {
+                    "key":key,
+                    "val":val,
+                    "kws":kws,
+                }
+            )
+            self.buffer.write("\n")
         
         # mimic module structure inside the definition
         hierarchy = []
