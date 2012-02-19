@@ -50,11 +50,34 @@ class BaseCompiler(object):
         self._class_name = []
 
         # This lists all variables in the local scope:
-        self._scope = []
+        self._vars = []
         self._classes = {}
         self._exceptions = []
+        self._funcs = []
+        
+        self._vars_stack = []
+        self._classes_stack = []
+        self._exceptions_stack = []
+        self._funcs_stack = []
+        
         self.opts = opts
         self.shared_state = kwargs["shared_state"]
+
+    def push_scope(self):
+        self._vars_stack.append(self._vars)
+        self._vars = []
+        self._funcs_stack.append(self._funcs)
+        self._funcs = []
+        self._classes_stack.append(self._classes)
+        self._classes = {}
+        self._exceptions_stack.append(self._exceptions)
+        self._exceptions = []
+    
+    def pop_scope(self):
+        self._vars = self._vars_stack.pop()
+        self._funcs = self._funcs_stack.pop()
+        self._classes = self._classes_stack.pop()
+        self._exceptions = self._exceptions_stack.pop()
 
     @property
     def module(self):
