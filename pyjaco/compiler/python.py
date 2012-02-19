@@ -122,8 +122,10 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         else:
             offset = 0
 
-        self._scope = [arg.id for arg in node.args.args]
         self._funcs.append(node.name)
+        self.push_scope()
+
+        self._scope = [arg.id for arg in node.args.args]
 
         inclass = self.stack_destiny(["ClassDef", "FunctionDef"], 2) in ["ClassDef"]
 
@@ -175,7 +177,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         for stmt in node.body:
             js.extend(self.indent(self.visit(stmt)))
 
-        self._scope = []
+        self.pop_scope()
         if not (node.body and isinstance(node.body[-1], ast.Return)):
             js.append("return None;")
         js.append("}")
@@ -212,6 +214,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
                 )
             )
 
+        self.push_scope()
         self._class_name.append(class_name)
         heirar = self.build_ref(self._class_name)
         for stmt in node.body:
@@ -232,6 +235,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             else:
                 raise JSError("Unsupported class data: %s" % stmt)
         self._class_name.pop()
+        self.pop_scope()
 
         return js
 
