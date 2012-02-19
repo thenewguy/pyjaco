@@ -29,6 +29,7 @@
 
 import ast
 import inspect
+from itertools import chain
 
 class JSError(Exception):
     pass
@@ -78,6 +79,19 @@ class BaseCompiler(object):
         self._funcs = self._funcs_stack.pop()
         self._classes = self._classes_stack.pop()
         self._exceptions = self._exceptions_stack.pop()
+    
+    def in_local_scope(self, name):
+        if name in chain(self._vars, self._funcs, self._classes, self._exceptions):
+            return True
+        return False
+    
+    def in_global_scope(self, name):
+        if name in chain(*chain(self._vars_stack, self._classes_stack, self._exceptions_stack, self._funcs_stack)):
+            return True
+        return False
+    
+    def in_scope(self, name):
+        return self.in_local_scope(name) or self.in_global_scope(name)
 
     @property
     def module(self):
