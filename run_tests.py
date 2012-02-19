@@ -4,8 +4,31 @@ import optparse
 import testtools.runner
 import testtools.util
 import testtools.tests
+import os
 from unittest import installHandler
 from pyjs import BuiltinGenerator
+
+should_remove_suffixes = (
+        ".py.js.out",
+        ".py.err",
+        ".py.js",
+        ".py.out",
+        ".py.js.err",
+        ".py.comp.err",
+        ".pyc",
+    )
+should_remove_files = (
+    "tests/test_builtins.js.err",
+    "tests/test_builtins.js.out"
+)
+def should_remove(name):
+    name = name.replace("\\", "/")
+    if name in should_remove_files:
+        return True
+    for suffix in should_remove_suffixes:
+        if name.endswith(suffix):
+            return True
+    return False
 
 def main():
     installHandler()
@@ -37,12 +60,27 @@ def main():
         default=False,
         help="run only failing tests (to check for improvements)"
         )
+    option_parser.add_option(
+        "-c",
+        "--clean-first",
+        action="store_true",
+        dest="clean_first",
+        default=False,
+        help="clean tests before running"
+        )
     options, args = option_parser.parse_args()
     
     with open("py-builtins.js", "w") as f:
         builtins = BuiltinGenerator().generate_builtins()
         f.write(builtins)
     
+    if options.clean_first:
+        for root, dirs, files in os.walk('tests'):
+            for name in files:
+                path = os.path.join(root, name)
+                if should_remove(path):
+                    os.remove(path)
+                    
     runner = testtools.runner.Py2JsTestRunner(verbosity=2)
     results = None
     try:
