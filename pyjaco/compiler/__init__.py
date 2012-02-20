@@ -65,6 +65,20 @@ class BaseCompiler(object):
         
         self.opts = opts
         self.shared_state = kwargs["shared_state"]
+        
+        self.indention = "    "
+    
+    @property
+    def indent_count(self):
+        try:
+            i = self.shared_state["indent_count"]
+        except IndexError:
+            self.shared_state["indent_count"] = i = 0
+        return i
+    
+    @indent_count.setter
+    def indent_count(self, value):
+        self.shared_state["indent_count"] = value
 
     def push_scope(self):
         self._vars_stack.append(self._vars)
@@ -127,9 +141,16 @@ class BaseCompiler(object):
 
         return visitor(node)
 
-    @staticmethod
-    def indent(stmts):
-        return [ "    " + stmt for stmt in stmts ]
+    def increase_indent(self):
+        self.indent_count += 1
+        
+    def decrease_indent(self):
+        self.indent_count -= 1
+
+    def indent(self, stmts):
+        if isinstance(stmts, basestring):
+            stmts = [stmts]
+        return [ "%s%s" % (self.indention * self.indent_count, stmt) for stmt in stmts ]
 
     ## Shared code
 

@@ -147,6 +147,8 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         self.push_scope()
 
         self._vars = [arg.id for arg in node.args.args]
+        
+        self.increase_indent()
 
         if inclass or offset == 1:
             js.extend(self.indent(["var self = this;"]))
@@ -193,8 +195,10 @@ class Compiler(pyjaco.compiler.BaseCompiler):
 
         self.pop_scope()
         if not (node.body and isinstance(node.body[-1], ast.Return)):
-            js.append("return None;")
-        js.append("}")
+            js.extend(self.indent("return None;"))
+        
+        self.decrease_indent()
+        js.extend(self.indent("}"))
 
         for dec in node.decorator_list:
             js.extend(["%s.PY$%s = %s(%s.PY$__getattr__('%s'));" % (self.heirar, node.name, self.visit(dec), self.heirar, node.name)])

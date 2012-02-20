@@ -195,9 +195,12 @@ class Compiler(object):
         self.buffer.write("\n".join(hierarchy))
         self.buffer.write("\n")
         
+        # indent the compiler
+        self.shared_state["indent_count"] = 1
+        
         # compile and buffer the code
-        compiled = ["    " + stmt for stmt in self.compiler.visit(ast.parse(code))]
-        self.buffer.write("\n".join(compiled))
+        output = self.compiler.indent(self.compiler.visit(ast.parse(code)))
+        self.buffer.write("\n".join(output))
         self.buffer.write("\n")
         
         # output javascript that actually implements the module
