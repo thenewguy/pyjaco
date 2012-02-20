@@ -4,5 +4,5 @@ $PY.run_module = function (mod_name, run_name) {
 		"__name__": str(__name__),
 		"__builtins__": __builtins__
 	};
-	$PY.modules[mod_name](__kwargs_make(kwargs));
+	return $PY.modules[mod_name](__kwargs_make(kwargs));
 }
