@@ -211,7 +211,7 @@ class Compiler(object):
             )
         )
         self.buffer.write("\n")
-        self.buffer.write("})")
+        self.buffer.write("});")
         self.buffer.write("\n\n")
         
 
