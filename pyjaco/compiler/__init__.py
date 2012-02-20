@@ -72,7 +72,7 @@ class BaseCompiler(object):
     def indent_count(self):
         try:
             i = self.shared_state["indent_count"]
-        except IndexError:
+        except KeyError:
             self.shared_state["indent_count"] = i = 0
         return i
     
