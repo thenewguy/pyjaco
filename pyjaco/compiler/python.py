@@ -94,7 +94,11 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             pass
         elif name in self.local_scope:
             pass
-        elif self.build_ref(name) in self.scope:
+        elif self.build_ref(name) in self.local_scope:
+            name = self.build_ref(name)
+        elif name in self.global_scope:
+            pass
+        elif self.build_ref(name) in self.global_scope:
             name = self.build_ref(name)
         elif name in self.builtin:
             name = "__builtins__.PY$" + name
