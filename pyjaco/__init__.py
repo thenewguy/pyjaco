@@ -37,7 +37,7 @@ try:
     from _version import get_version, parse_version
 except ImportError:
     from .._version import get_version, parse_version
-from compiler.utils import special_globals 
+from compiler.utils import special_globals, dotted_to_hierarchy
 
 __version__ = get_version()
 __version_info__ = parse_version(__version__)
@@ -185,14 +185,9 @@ class Compiler(object):
             self.buffer.write("\n")
         
         # mimic module structure inside the definition
-        hierarchy = []
-        pieces = "%s." % dotted
-        while pieces and pieces.count('.'):
-            pieces = os.path.splitext(pieces)[0]
-            hierarchy.insert(0,"    %s = {};" % pieces)
-        hierarchy[0] = "    var %s = {};" % pieces
+        hierarchy = dotted_to_hierarchy(dotted)
         
-        self.buffer.write("\n".join(hierarchy))
+        self.buffer.write("\n".join(["    %s" % l for l in hierarchy]))
         self.buffer.write("\n")
         
         # indent the compiler
