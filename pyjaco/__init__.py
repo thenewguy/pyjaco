@@ -161,6 +161,8 @@ class Compiler(object):
         path, base, commonprefix = [x.replace('\\','/') for x in (path, base, commonprefix)]
         filename = path[len(commonprefix):].lstrip('/')
         dotted = os.path.splitext(filename)[0].replace('/', '.')
+        if dotted.endswith('.__init__'):
+            dotted = dotted[:-9]
         
         # make the module name available to the compilers
         self.shared_state["module"] = dotted
