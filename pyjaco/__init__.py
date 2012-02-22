@@ -188,6 +188,7 @@ class Compiler(object):
         
         # mimic module structure inside the definition
         hierarchy = dotted_to_hierarchy(dotted)
+        hierarchy = ["%s%s = {};" % ("" if i else "var ", x) for i, x in enumerate(hierarchy)]
         
         self.buffer.write("\n".join(["    %s" % l for l in hierarchy]))
         self.buffer.write("\n")

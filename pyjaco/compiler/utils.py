@@ -2,7 +2,8 @@ import os
 
 special_globals = {
     "__name__": None,
-    "__builtins__": None
+    "__builtins__": None,
+    "__module__": None
 }
 
 def dotted_to_hierarchy(dotted):
@@ -10,6 +11,5 @@ def dotted_to_hierarchy(dotted):
     pieces = "%s." % dotted
     while pieces and pieces.count('.'):
         pieces = os.path.splitext(pieces)[0]
-        hierarchy.insert(0,"%s = {};" % pieces)
-    hierarchy[0] = "var %s = {};" % pieces
+        hierarchy.insert(0, pieces)
     return hierarchy
