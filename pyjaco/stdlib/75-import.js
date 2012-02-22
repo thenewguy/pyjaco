@@ -1,3 +1,5 @@
+$PY.__import_cache = {};
+
 function __import__(name, dotted_caller) {
 	
 	if(!(name in $PY.modules)) {
@@ -13,11 +15,14 @@ function __import__(name, dotted_caller) {
 		name = tempname;
 	}
 	
-	var kwargs = {
-		"__name__": name,
-		"__builtins__": __builtins__,
-		"__module__": str(name),
-	};
+	if(!(name in $PY.__import_cache)) {
+		var kwargs = {
+			"__name__": name,
+			"__builtins__": __builtins__,
+			"__module__": str(name)
+		};
+		$PY.__import_cache[name] = $PY.modules[name](__kwargs_make(kwargs));
+	}
 	
-	return $PY.modules[name](__kwargs_make(kwargs));
+	return $PY.__import_cache[name];
 }
