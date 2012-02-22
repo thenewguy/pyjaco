@@ -41,10 +41,22 @@ module.PY$__init__ = function(modname, filename, objects) {
 module.PY$__getattr__ = function(k) {
     var q = this["PY$" + k];
     if (q === undefined) {
-        throw __builtins__.PY$AttributeError(js(this.PY$__repr__()) + " does not have attribute '" + js(k) + "'");
-    } else {
-        return q;
+    	var AE = true;
+    	try {
+    		q = this["PY$" + k] = __import__(k, this.modname);
+            AE = false;
+        } catch ($v1) {
+            if ($PY.isinstance($v1, __builtins__.PY$ImportError)) {
+            	AE = true;
+	        } else { 
+	        	throw $v1; 
+	        }
+        };
+    	if(AE) {
+    		throw __builtins__.PY$AttributeError(js(this.PY$__repr__()) + " does not have attribute '" + js(k) + "'");
+    	}
     }
+    return q;
 };
 
 module.PY$__repr__ = function() {
