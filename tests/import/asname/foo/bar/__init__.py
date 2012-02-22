@@ -1,0 +1,2 @@
+def Bar():
+    return "Bar"

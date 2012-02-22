@@ -1,0 +1,2 @@
+def Foo():
+    return "Foo"
