@@ -31,7 +31,7 @@ import ast
 import pyjaco.compiler
 from pyjaco.compiler import JSError
 from pyjaco.compiler.multiplexer import dump
-from utils import special_globals
+from utils import special_globals, dotted_to_hierarchy
 
 class Compiler(pyjaco.compiler.BaseCompiler):
 
@@ -500,8 +500,31 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         js.append("if (%s) { throw %s; }" % (exc_store, exc_store))
         return js
 
-    def _visit_Import(self, node):
-        pass
+    def visit_Import(self, node):
+        stmts = []
+        for node in node.names:
+            var = node.asname if node.asname else node.name
+            hierarchy = dotted_to_hierarchy(var)
+            var = var.replace('.', '.PY$')
+            declare = ""
+            if len(hierarchy) > 1:
+                for i, x in enumerate(hierarchy):
+                    y = x.replace('.', '.PY$') 
+                    ts = []
+                    if not i and not x in self.local_scope:
+                        stmt = "var %(x)s;"
+                        ts.append(stmt)
+                        self._vars.append(x)
+                    stmt = "%(y)s = %(y)s || module('%(x)s', '<empty placeholder>', {});"
+                    ts.append(stmt)
+                    stmts.extend([t % {"x": x, "y": y} for t in ts])
+                del stmts[-1]
+            elif not var in self.local_scope:
+                declare = "var "
+                self._vars.append(var)
+            stmt = "%s%s = __import__('%s', js(__module__));" % (declare, var, node.name)
+            stmts.append(stmt)
+        return stmts
 
     def visit_ImportFrom(self, node):
         if node.module == "__future__":
