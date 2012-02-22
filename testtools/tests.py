@@ -75,6 +75,26 @@ def create_cases():
                     )
                 )
             )
+    
+    test_paths = glob.glob("tests/import/*/")
+    temp = []
+    for path in test_paths:
+        path = path.replace('\\', '/').strip('/')
+        path = "%s/%s.py" % (path, os.path.basename(path))
+        if os.path.exists(path):
+            temp.append(path)
+    test_paths = temp
+    test_paths.sort()
+    for test_path in test_paths:
+        test_cases.addTest(
+            unittest.TestLoader().loadTestsFromTestCase(
+                util.compile_as_module_and_run_file_test(
+                    test_path, 
+                    os.path.basename(test_path),
+                    uses_imports = True
+                    )
+                )
+            )
         
     return test_cases , failing_test_cases
 

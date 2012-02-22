@@ -169,7 +169,7 @@ def compile_and_run_file_failing_test(*a, **k):
 
     return FailingTest
 
-def compile_as_module_and_run_file_test(file_path, file_name=None):
+def compile_as_module_and_run_file_test(file_path, file_name=None, uses_imports = False):
     """Creates a test that compiles as a module and runs the python file as js"""
     file_name = file_name if file_name else file_path
 
@@ -213,11 +213,35 @@ def compile_as_module_and_run_file_test(file_path, file_name=None):
                 '"%(compiler_error)s"'
                 ) % self.templ 
             
+            templ = self.templ.copy()
+            import_commands = []
+            templ["import_js"] = ""
+            
+            if uses_imports:
+                dirpath = os.path.dirname(file_path)
+                for root, dirs, files in os.walk(dirpath):
+                    for fn in [x for x in files if x.endswith('.py')]:
+                        py_path = os.path.join(root, fn).replace("\\","/")
+                        if py_path == self.templ["py_path"].replace("\\","/"):
+                            continue
+                        js_path = py_path + ".js"
+                        cmd = (
+                            '%(py_executable)s pyjs.py -q -m '
+                            '"%(py_path)s" > "%(js_path)s"'
+                        ) % {
+                             "py_executable": self.templ["py_executable"],
+                             "py_path": py_path,
+                             "js_path": js_path
+                        }
+                        import_commands.append(cmd)
+                        templ["import_js"] = '%s -f "%s"' % (templ["import_js"], js_path)
+                        
+            
             javascript_command = (
-                'js -f "%(js_path)s" -f "%(js_run_file)s" > "%(js_out_path)s" 2> '
+                'js -f "%(js_path)s" %(import_js)s -f "%(js_run_file)s" > "%(js_out_path)s" 2> '
                 '"%(js_error)s"' 
-                ) % self.templ
-
+                ) % templ
+                
             # create javascript run file
             with open(self.templ['js_run_file'], 'w') as f:
                 dotted = os.path.splitext(self.templ['py_path'])[0].replace("\\","/").replace("/",".")
@@ -229,6 +253,7 @@ def compile_as_module_and_run_file_test(file_path, file_name=None):
                 commands.append(python_command)
             if mtime_js_res < mtime_src:
                 commands.append(compile_command)
+            commands.extend(import_commands)
             commands.append(javascript_command)
 
             for cmd in commands:
