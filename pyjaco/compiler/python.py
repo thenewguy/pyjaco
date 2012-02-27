@@ -32,6 +32,7 @@ import pyjaco.compiler
 from pyjaco.compiler import JSError
 from pyjaco.compiler.multiplexer import dump
 from utils import special_globals, dotted_to_hierarchy
+from itertools import chain
 
 class Compiler(pyjaco.compiler.BaseCompiler):
 
@@ -527,14 +528,48 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         return stmts
 
     def visit_ImportFrom(self, node):
+        stmts = []
         if node.module == "__future__":
             if len(node.names) == 1 and node.names[0].name == "division":
                 self.future_division = True
             else:
                 raise JSError("Unknown import from __future__: %s" % node.names[0].name)
+        elif node.module == "__javascript__":
+            raise JSError("import from __javascript__ is not supported yet")
         else:
-            raise JSError("Import only supports from __future__ import foo")
-        return []
+            module = node.module
+            catch_var = self.alloc_var()
+            stmts.append("var %s;" % catch_var)
+            for node in node.names:
+                var = node.asname if node.asname else node.name
+                if not var in self.local_scope:
+                    declare = "var "
+                    self._vars.append(var)
+                else:
+                    declare = ""
+                stmt = []
+                stmt.append("%s%s%s = __import__('%s', js(__module__)).PY$__getattr__('%s');" % (
+                        self.indention,
+                        declare,
+                        var,
+                        module,
+                        node.name
+                    )
+                )
+                stmt.append("} catch (%s) {" % catch_var)
+                stmt.append("%sif ($PY.isinstance(%s, __builtins__.PY$AttributeError)) {" % (self.indention, catch_var))
+                stmt.append("%s%sthrow __builtins__.PY$ImportError('Could not find %s');" % (
+                        self.indention,
+                        self.indention,
+                        node.name
+                    )
+                )
+                stmt.append("%s} else {" % self.indention)
+                stmt.append("%s%sthrow %s;" % (self.indention, self.indention, catch_var))
+                stmt.append("%s}" % self.indention)
+                stmt.append("}")
+                stmts.append("\n".join(chain(["try {"], self.indent(stmt))))
+        return stmts
 
     def visit_Lambda(self, node):
         node_args = self.visit(node.args)

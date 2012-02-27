@@ -77,6 +77,7 @@ def create_cases():
             )
     
     test_paths = glob.glob("tests/import/*/")
+    test_paths.extend(glob.glob("tests/importfrom/*/"))
     temp = []
     for path in test_paths:
         path = path.replace('\\', '/').strip('/')
