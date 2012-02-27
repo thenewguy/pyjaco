@@ -307,7 +307,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
                 declare = ""
                 if not var in self.local_scope:
                     self._vars.append(var)
-                    if not self.module or not var.startswith(self.module):
+                    if not self.module or not var.startswith(self.module_ref):
                         declare = "var "
                 js = ["%s%s = %s;" % (declare, var, value)]
             elif isinstance(target, ast.Attribute):

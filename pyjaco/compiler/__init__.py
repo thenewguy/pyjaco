@@ -118,9 +118,17 @@ class BaseCompiler(object):
     def module(self):
         return self.shared_state.get("module", "")
     
+    @property
+    def module_ref_prefix(self):
+        return "$m__"
+    
+    @property
+    def module_ref(self):
+        return "%s%s" % (self.module_ref_prefix, self.module)
+    
     def build_ref(self, name):
         if self.module:
-            pieces = [self.module]
+            pieces = [self.module_ref]
             if isinstance(name, basestring):
                 pieces.append(name)
             else:
