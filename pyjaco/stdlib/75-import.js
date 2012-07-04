@@ -19,7 +19,7 @@ function __import__(name, dotted_caller) {
 	
 	if(module === undefined) {
 		var kwargs = {
-			"__name__": name,
+			"__name__": str(name),
 			"__builtins__": __builtins__,
 			"__module__": str(name)
 		};
