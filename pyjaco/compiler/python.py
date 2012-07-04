@@ -542,6 +542,8 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             stmts.append("var %s;" % catch_var)
             for node in node.names:
                 var = node.asname if node.asname else node.name
+                if var == "*":
+                    raise JSError("from foo import * is not supported yet")
                 if not var in self.local_scope:
                     declare = "var "
                     self._vars.append(var)
