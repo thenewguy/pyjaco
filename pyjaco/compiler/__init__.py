@@ -55,11 +55,13 @@ class BaseCompiler(object):
         self._classes = {}
         self._exceptions = []
         self._funcs = []
+        self._global_identifiers = []
         
         self._vars_stack = []
         self._classes_stack = []
         self._exceptions_stack = []
         self._funcs_stack = []
+        self._global_identifiers_stack = []
         
         self._scope_level = 0
         
@@ -89,6 +91,8 @@ class BaseCompiler(object):
         self._classes = {}
         self._exceptions_stack.append(self._exceptions)
         self._exceptions = []
+        self._global_identifiers_stack.append(self._global_identifiers)
+        self._global_identifiers = []
         self._scope_level += 1
     
     def pop_scope(self):
@@ -96,6 +100,7 @@ class BaseCompiler(object):
         self._funcs = self._funcs_stack.pop()
         self._classes = self._classes_stack.pop()
         self._exceptions = self._exceptions_stack.pop()
+        self._global_identifiers = self._global_identifiers_stack.pop()
         self._scope_level -= 1
     
     @property

@@ -113,7 +113,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             return ["return None;"]
 
     def visit_Global(self, node):
-        self._vars.extend(node.names)
+        self._global_identifiers.extend(node.names)
         return []
 
     def visit_FunctionDef(self, node):
@@ -289,7 +289,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
                 var = self.visit(target)
                 declare = ""
                 if isinstance(target, ast.Name):
-                    if not (var in self._vars):
+                    if not var in self._global_identifiers and not var in self._vars:
                         self._vars.append(var)
                         declare = "var "
                 js.append("%s%s = %s.PY$__getitem__(%d);" % (declare, var, dummy, i))
@@ -302,10 +302,10 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         else:
             if isinstance(target, ast.Name):
                 var = target.id
-                if self.scope_is_global:
+                if self.scope_is_global or var in self._global_identifiers:
                     var = self.build_ref(var)
                 declare = ""
-                if not var in self.local_scope:
+                if not var in self.local_scope and not var in self._global_identifiers:
                     self._vars.append(var)
                     if not self.module or not var.startswith(self.module_ref):
                         declare = "var "
