@@ -103,6 +103,8 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             name = self.build_ref(name)
         elif name in self.builtin:
             name = "__builtins__.PY$" + name
+        else:
+            name = self.build_ref(name)
             
         return name
 
@@ -501,12 +503,16 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         js.append("if (%s) { throw %s; }" % (exc_store, exc_store))
         return js
 
-    def visit_Import(self, node):
+    def visit_Import(self, node, var_override=None):
         stmts = []
         for node in node.names:
-            var = node.asname if node.asname else node.name
-            hierarchy = dotted_to_hierarchy(var)
-            var = var.replace('.', '.PY$')
+            if var_override:
+                var = var_override
+                hierarchy = []
+            else:
+                var = node.asname if node.asname else node.name
+                hierarchy = dotted_to_hierarchy(var)
+                var = var.replace('.', '.PY$')
             declare = ""
             if len(hierarchy) > 1:
                 for i, x in enumerate(hierarchy):
@@ -543,7 +549,37 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             for node in node.names:
                 var = node.asname if node.asname else node.name
                 if var == "*":
-                    raise JSError("from foo import * is not supported yet")
+                    if node.asname:
+                        raise JSError("'from foo import bar as *' is not valid syntax.")
+                    var = self.alloc_var()
+                    tmp = self.alloc_var()
+                    node.name = module
+                    stmt = self.visit_Import(ast.Import(names=[node]), var_override=var)
+                    stmt.append("for (var %s in %s) {" % (
+                            tmp,
+                            var
+                        )
+                    )
+                    # http://jsperf.com/js-startswith/8
+                    stmt.append("%(i)sif (%(t)s.lastIndexOf('PY$', 0) === 0 && %(t)s.lastIndexOf('PY$__', 0) !== 0 && %(v)s.hasOwnProperty(%(t)s)) {" % {
+                            "i":self.indention,
+                            "v":var,
+                            "t":tmp
+                        }
+                    )
+                    stmt.append("%s%s[%s] = %s[%s];" % (
+                            self.indention * 2,
+                            self.module_ref,
+                            tmp,
+                            var,
+                            tmp
+                        )
+                    )
+                    stmt.append("%s}" % self.indention)
+                    stmt.append("}")
+                    stmts.append("\n".join(self.indent(stmt)))
+                    continue
+                    
                 if not var in self.local_scope:
                     declare = "var "
                     self._vars.append(var)
