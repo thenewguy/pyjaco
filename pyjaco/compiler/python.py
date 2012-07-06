@@ -103,8 +103,8 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             name = self.build_ref(name)
         elif name in self.builtin:
             name = "__builtins__.PY$" + name
-        else:
-            name = self.build_ref(name)
+        elif self.module:
+            name = self.build_ref("__getattr__('%s')" % name)
             
         return name
 
@@ -552,32 +552,37 @@ class Compiler(pyjaco.compiler.BaseCompiler):
                     if node.asname:
                         raise JSError("'from foo import bar as *' is not valid syntax.")
                     var = self.alloc_var()
-                    tmp = self.alloc_var()
                     node.name = module
                     stmt = self.visit_Import(ast.Import(names=[node]), var_override=var)
-                    stmt.append("for (var %s in %s) {" % (
-                            tmp,
-                            var
-                        )
-                    )
-                    # http://jsperf.com/js-startswith/8
-                    stmt.append("%(i)sif (%(t)s.lastIndexOf('PY$', 0) === 0 && %(t)s.lastIndexOf('PY$__', 0) !== 0 && %(v)s.hasOwnProperty(%(t)s)) {" % {
-                            "i":self.indention,
+                    stmt.append("if (%s.hasOwnProperty('PY$__all__')) {" % var)
+                    stmt.append("%sfor (%s in %s.PY$__all__.items) {" % (self.indention, catch_var, var))
+                    stmt.append("%s%s = 'PY$' + %s.PY$__all__.items[%s];" % (self.indention * 2, catch_var, var, catch_var))
+                    stmt.append("%(i)s%(r)s[%(t)s] = %(v)s[%(t)s];\n%(i)s}" % {
+                            "i":self.indention * 2,
+                            "r":self.module_ref,
+                            "t":catch_var,
                             "v":var,
-                            "t":tmp
                         }
                     )
-                    stmt.append("%s%s[%s] = %s[%s];" % (
-                            self.indention * 2,
-                            self.module_ref,
-                            tmp,
-                            var,
-                            tmp
-                        )
+                    stmt.append("} else {")
+                    stmt.append("%sfor (%s in %s) {" % (self.indention, catch_var, var))
+                    # http://jsperf.com/js-startswith/8
+                    stmt.append("%(i)sif (%(t)s.lastIndexOf('PY$', 0) === 0 && %(t)s.lastIndexOf('PY$_', 0) !== 0 && %(v)s.hasOwnProperty(%(t)s)) {" % {
+                            "i":self.indention * 2,
+                            "v":var,
+                            "t":catch_var
+                        }
+                    )
+                    stmt.append("%(i)s%(r)s[%(t)s] = %(v)s[%(t)s];\n%(i)s}" % {
+                            "i":self.indention * 3,
+                            "r":self.module_ref,
+                            "t":catch_var,
+                            "v":var,
+                        }
                     )
                     stmt.append("%s}" % self.indention)
                     stmt.append("}")
-                    stmts.append("\n".join(self.indent(stmt)))
+                    stmts.append("\n".join(chain((stmt[0],), self.indent(stmt[1:]))))
                     continue
                     
                 if not var in self.local_scope:

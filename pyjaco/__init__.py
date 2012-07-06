@@ -189,6 +189,11 @@ class Compiler(object):
         # mimic module structure inside the definition
         hierarchy = dotted_to_hierarchy(dotted)
         hierarchy = ["%s%s%s = {};" % ("" if i else "var ", self.compiler.module_ref_prefix, x) for i, x in enumerate(hierarchy)]
+        hierarchy[-1] = "%smodule('%s', '%s', {});" % (
+            hierarchy[-1][:-3],# strip "{};"
+            dotted,
+            filename
+        )
         
         self.buffer.write("\n".join(["    %s" % l for l in hierarchy]))
         self.buffer.write("\n")
@@ -202,9 +207,7 @@ class Compiler(object):
         self.buffer.write("\n")
         
         # output javascript that actually implements the module
-        self.buffer.write("    return module('%s', '%s', %s%s);" % (
-                dotted,
-                filename,
+        self.buffer.write("    return %s%s;" % (
                 self.compiler.module_ref_prefix,
                 dotted
             )
