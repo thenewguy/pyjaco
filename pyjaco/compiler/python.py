@@ -103,7 +103,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             name = self.build_ref(name)
         elif name in self.builtin:
             name = "__builtins__.PY$" + name
-        elif self.module:
+        elif self.scope_is_global and self.module:
             name = self.build_ref("__getattr__('%s')" % name)
             
         return name
@@ -615,8 +615,10 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         return stmts
 
     def visit_Lambda(self, node):
+        self.push_scope()
         node_args = self.visit(node.args)
         node_body = self.visit(node.body)
+        self.pop_scope()
         return "function(%s) {return %s;}" % (node_args, node_body)
 
     def visit_BoolOp(self, node):
