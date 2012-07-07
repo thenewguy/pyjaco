@@ -24,18 +24,44 @@ def create_cases():
     test_paths = glob.glob("tests/test_*.py")
     test_paths.sort()
     for test_path in test_paths:
+        # test standard result
         test_cases.addTest(
             unittest.TestLoader().loadTestsFromTestCase(
                 util.compile_file_test(test_path, os.path.basename(test_path))
+                )
+            )
+        
+        # also test as module
+        test_cases.addTest(
+            unittest.TestLoader().loadTestsFromTestCase(    
+                util.compile_as_module_and_run_file_test(
+                    test_path, 
+                    os.path.basename(test_path),
+                    uses_imports = False,
+                    output_postfix = "as_module"
+                    )
                 )
             )
 
     test_paths = glob.glob("tests/test_*.js")
     test_paths.sort()
     for test_path in test_paths:
+        # test standard result
         test_cases.addTest(
             unittest.TestLoader().loadTestsFromTestCase(
                 util.run_with_stdlib(test_path, os.path.basename(test_path))
+                )
+            )
+        
+        # also test as module
+        test_cases.addTest(
+            unittest.TestLoader().loadTestsFromTestCase(
+                util.compile_as_module_and_run_file_test(
+                    test_path, 
+                    os.path.basename(test_path),
+                    uses_imports = False,
+                    output_postfix = "as_module"
+                    )
                 )
             )
 
@@ -46,11 +72,24 @@ def create_cases():
             test_path.replace("\\","/") not 
             in known_to_fail.KNOWN_TO_FAIL
             ):
+            # test standard result
             test_cases.addTest(
                 unittest.TestLoader().loadTestsFromTestCase(
                     util.compile_and_run_file_test(
                         test_path, 
                         os.path.basename(test_path)
+                        )
+                    )
+                )
+
+            # also test as module
+            test_cases.addTest(
+                unittest.TestLoader().loadTestsFromTestCase(
+                    util.compile_as_module_and_run_file_test(
+                        test_path, 
+                        os.path.basename(test_path),
+                        uses_imports = False,
+                        output_postfix = "as_module"
                         )
                     )
                 )

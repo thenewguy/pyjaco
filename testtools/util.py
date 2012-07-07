@@ -10,6 +10,7 @@ else:
 import os
 import subprocess
 import posixpath
+from os.path import split, splitext
 
 def run_command(cmd):
     return subprocess.call(cmd, shell = True)
@@ -169,24 +170,31 @@ def compile_and_run_file_failing_test(*a, **k):
 
     return FailingTest
 
-def compile_as_module_and_run_file_test(file_path, file_name=None, uses_imports = False):
+def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfix=None, uses_imports = False):
     """Creates a test that compiles as a module and runs the python file as js"""
     file_name = file_name if file_name else file_path
 
     class CompileAsModuleAndRunFile(unittest.TestCase):
         """Tests that a file can be compiled and run as js"""
+        if output_postfix:
+            (head, tail) = split(file_path.replace("\\", "/"))
+            (root, ext) = splitext(tail)
+            output_path = "%s/%s_%s%s" % (head.rstrip("/"), root, output_postfix, ext)
+        else:
+            output_path = file_path
         templ = {
-        "py_executable": sys.executable,
-        "py_path": file_path, 
-        "py_unix_path": get_posix_path(file_path),
-        "py_out_path": file_path + ".out",
-        "js_path": file_path + ".js",
-        "js_run_file": file_path + ".js.run",
-        "js_out_path": file_path + ".js.out",
-        "py_error": file_path + ".err",
-        "js_error": file_path + ".js.err",
-        "compiler_error": file_path + ".comp.err",
-        "name": file_name,
+            "py_executable": sys.executable,
+            "py_path": file_path, 
+            "py_unix_path": get_posix_path(file_path),
+            "write_test_as": get_posix_path(output_path),
+            "py_out_path": output_path + ".out",
+            "js_path": output_path + ".js",
+            "js_run_file": output_path + ".js.run",
+            "js_out_path": output_path + ".js.out",
+            "py_error": output_path + ".err",
+            "js_error": output_path + ".js.err",
+            "compiler_error": output_path + ".comp.err",
+            "name": file_name,
         }
         def reportProgres(self):
             """Should be overloaded by the test result class"""
@@ -267,5 +275,8 @@ def compile_as_module_and_run_file_test(file_path, file_name=None, uses_imports 
 
         def __str__(self):
             return "%(py_unix_path)s: " % self.templ
+        
+        def write_test_as(self):
+            return "%(write_test_as)s: " % self.templ
 
     return CompileAsModuleAndRunFile

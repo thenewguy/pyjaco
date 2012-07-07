@@ -22,7 +22,10 @@ class Py2JsTestResult(unittest.TestResult):
         super(Py2JsTestResult, self).startTest(test)
         test.reportProgres = self.addProgress
         test.stop = self.stop
-        self.__writer.write(str(test))
+        try:
+            self.__writer.write(test.write_test_as())
+        except AttributeError:
+            self.__writer.write(str(test))
         self.__state = "[Error]"
         self.__color = "Red"
 
