@@ -5,10 +5,27 @@ tests/*/*.out
 tests/*/*.diff
 tests/*/*.err
 tests/*/*.py.js
+tests/*/*.run
 tests/*.err
 tests/*.out
-tests/as_module/*/*
-!tests/as_module/*/*.py
+tests/*.py.js
+tests/*.run
+tests/*/*/*.out
+tests/*/*/*.diff
+tests/*/*/*.err
+tests/*/*/*.py.js
+tests/*/*/*.run
+tests/*/*/*/*.out
+tests/*/*/*/*.diff
+tests/*/*/*/*.err
+tests/*/*/*/*.py.js
+tests/*/*/*/*.run
+tests/*/*/*/*/*.out
+tests/*/*/*/*/*.diff
+tests/*/*/*/*/*.err
+tests/*/*/*/*/*.py.js
+tests/*/*/*/*/*.run
+
 
 .d8_history
 
