@@ -333,10 +333,13 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             raise JSError("Unsupported AugAssign type %s" % node.op)
 
     def visit_For(self, node):
+        for_target_alloced = False
+        
         if isinstance(node.target, ast.Name):
             for_target = self.visit(node.target)
         elif isinstance(node.target, ast.Tuple):
             for_target = self.alloc_var()
+            for_target_alloced = True
         else:
             raise JSError("Advanced for-loop decomposition not supported")
 
@@ -381,7 +384,9 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             orelse_var = self.alloc_var()
             js.append("var %s = true;" % orelse_var)
 
-        js.append("var %s;" % for_target);
+        if for_target_alloced or not self.module:
+            js.append("var %s;" % for_target);
+            
         for_init = "var %s = iter(%s)" % (iter_var, for_iter)
         for_iter = "%s = $PY.next(%s)" % (for_target, iter_var)
         for_cond = "%s !== null" % (for_target)
