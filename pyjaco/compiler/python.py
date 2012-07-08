@@ -104,7 +104,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         elif name in self.builtin:
             name = "__builtins__.PY$" + name
         elif self.scope_is_global and self.module:
-            name = self.build_ref("__getattr__('%s')" % name)
+            name = self.build_ref(name)
             
         return name
 
