@@ -804,7 +804,16 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         if not isinstance(node.generators[0].target, ast.Name):
             raise JSError("Non-simple targets in generator expressions not supported")
 
-        return "__builtins__.PY$map(function(%s) {return %s;}, %s)" % (node.generators[0].target.id, self.visit(node.elt), self.visit(node.generators[0].iter))
+        self.push_scope()
+        
+        var = node.generators[0].target.id
+        self._vars.append(var)
+        
+        output = "__builtins__.PY$map(function(%s) {return %s;}, %s)" % (var, self.visit(node.elt), self.visit(node.generators[0].iter)) 
+        
+        self.pop_scope()
+        
+        return output
 
     def visit_Slice(self, node):
         if node.lower and node.upper and node.step:
