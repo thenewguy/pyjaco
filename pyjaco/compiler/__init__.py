@@ -160,10 +160,12 @@ class BaseCompiler(object):
     def decrease_indent(self):
         self.indent_count -= 1
 
-    def indent(self, stmts):
+    def indent(self, stmts, indent_count = None):
+        if indent_count is None:
+            indent_count = self.indent_count
         if isinstance(stmts, basestring):
             stmts = [stmts]
-        return [ "%s%s" % (self.indention * self.indent_count, stmt) for stmt in stmts ]
+        return [ "%s%s" % (self.indention * indent_count, stmt) for stmt in stmts ]
 
     ## Shared code
 
