@@ -390,14 +390,14 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         for_init = "var %s = iter(%s)" % (iter_var, for_iter)
         for_iter = "%s = $PY.next(%s)" % (for_target, iter_var)
         for_cond = "%s !== null" % (for_target)
-        js.append("  for (%s; %s; %s) {" % (for_init, for_iter, for_cond))
+        js.append("for (%s; %s; %s) {" % (for_init, for_iter, for_cond))
         if isinstance(node.target, ast.Tuple):
             js.append("    %s;" % "; ".join(["var %s = %s.PY$__getitem__(%s)" % (x.id, for_target, i) for i, x in enumerate(node.target.elts)]))
 
         for stmt in node.body:
             js.extend(self.indent(self.visit(stmt)))
 
-        js.append("  }")
+        js.append("}")
 
         if node.orelse:
             js.append("if (%s) {" % orelse_var)
