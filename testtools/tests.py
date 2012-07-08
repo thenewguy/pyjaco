@@ -48,11 +48,12 @@ def create_cases():
     test_paths = glob.glob("tests/test_*.js")
     test_paths.sort()
     for test_path in test_paths:
-        test_cases.addTest(
-            unittest.TestLoader().loadTestsFromTestCase(
-                util.run_with_stdlib(test_path, os.path.basename(test_path))
+        if not test_path.lower().endswith(".py.js"):
+            test_cases.addTest(
+                unittest.TestLoader().loadTestsFromTestCase(
+                    util.run_with_stdlib(test_path, os.path.basename(test_path))
+                    )
                 )
-            )
 
     test_paths_module_postfix = "as_module"
     test_paths = glob.glob("tests/*/*.py")
