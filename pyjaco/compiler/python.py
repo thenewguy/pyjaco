@@ -453,61 +453,85 @@ class Compiler(pyjaco.compiler.BaseCompiler):
     def visit_TryExcept(self, node):
         if node.orelse:
             raise JSError("Try-Except with else-clause not supported")
+        self.push_scope()
 
         js = []
         js.append("try {")
+        
         for n in node.body:
-            js.extend(self.indent(self.visit(n)))
+            js.extend(self.indent(self.visit(n), indent_count=1))
         err = self.alloc_var()
         self._exceptions.append(err)
         js.append("} catch (%s) {" % err)
+        
         catchall = False
         for i, n in enumerate(node.handlers):
             if i > 0:
-                pre = "else "
+                pre = "} else "
             else:
                 pre = ""
             if n.type:
                 if isinstance(n.type, ast.Name):
-                    js.extend(self.indent(["%sif ($PY.isinstance(%s, %s)) {" % (pre, err, self.visit(n.type))]))
+                    js.append("%s%sif ($PY.isinstance(%s, %s)) {" % (
+                            self.indention,
+                            pre,
+                            err,
+                            self.visit(n.type)
+                        )
+                    )
                 else:
                     raise JSError("Catching non-simple exceptions not supported")
             else:
                 catchall = True
-                js.append("%sif (true) {" % (pre))
+                js.append("%s%sif (true) {" % (self.indention, pre))
 
             if n.name:
                 if isinstance(n.name, ast.Name):
-                    js.append(self.indent(["var %s = %s;" % (self.visit(n.name), err)])[0])
+                    js.append("%svar %s = %s;" % (self.indention*2, self.visit(n.name), err))
                 else:
                     raise JSError("Catching non-simple exceptions not supported")
 
             for b in n.body:
-                js.extend(self.indent(self.visit(b)))
+                js.extend(self.indent(self.visit(b), indent_count=2))
 
-            js.append("}")
 
         if not catchall:
-            js.append("else { throw %s; }" % err);
-
+            js.append("%s} else {" % self.indention)
+            js.append("%sthrow %s;" % (self.indention*2, err));
+        js.append("%s}" % self.indention)
+        
         js.append("};")
-        self._exceptions.pop()
+        
+        self.pop_scope()
         return js
-
+    
     def visit_TryFinally(self, node):
+        self.push_scope()
+        
         js = []
-        exc_var = self.alloc_var()
+        
         exc_store = self.alloc_var()
         js.append("var %s;" % exc_store)
+        
         js.append("try {")
         for n in node.body:
-            js.append("\n".join(self.visit(n)))
-        js.append("} catch (%s) { %s = %s; }" % (exc_var, exc_store, exc_var))
+            js.extend(self.indent(self.visit(n), indent_count=1))
+        
+        exc_var = self.alloc_var()
+        js.append("} catch (%s) {" % exc_var)
+        js.append("%s%s = %s;" % (self.indention, exc_store, exc_var))
+        js.append("}")
+        
         for n in node.finalbody:
-            js.append("\n".join(self.visit(n)))
-        js.append("if (%s) { throw %s; }" % (exc_store, exc_store))
-        return js
-
+            js.extend(self.visit(n))
+        
+        js.append("if (%s) {" % exc_store)
+        js.append("%sthrow %s;" % (self.indention, exc_store))
+        js.append("}")
+        
+        self.pop_scope()
+        return js 
+    
     def visit_Import(self, node, var_override=None):
         stmts = []
         for node in node.names:
