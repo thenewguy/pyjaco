@@ -170,18 +170,22 @@ def compile_and_run_file_failing_test(*a, **k):
 
     return FailingTest
 
+def postfix_path_filename(file_path, output_postfix=None):
+    if output_postfix:
+        (head, tail) = split(file_path.replace("\\", "/"))
+        (root, ext) = splitext(tail)
+        output_path = "%s/%s_%s%s" % (head.rstrip("/"), root, output_postfix, ext)
+    else:
+        output_path = file_path
+    return output_path
+
 def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfix=None, uses_imports = False):
     """Creates a test that compiles as a module and runs the python file as js"""
     file_name = file_name if file_name else file_path
 
     class CompileAsModuleAndRunFile(unittest.TestCase):
         """Tests that a file can be compiled and run as js"""
-        if output_postfix:
-            (head, tail) = split(file_path.replace("\\", "/"))
-            (root, ext) = splitext(tail)
-            output_path = "%s/%s_%s%s" % (head.rstrip("/"), root, output_postfix, ext)
-        else:
-            output_path = file_path
+        output_path = postfix_path_filename(file_path, output_postfix)
         templ = {
             "py_executable": sys.executable,
             "py_path": file_path, 
@@ -280,3 +284,15 @@ def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfi
             return "%(write_test_as)s: " % self.templ
 
     return CompileAsModuleAndRunFile
+
+def compile_as_module_and_run_file_failing_test(*a, **k):
+    """Turn a test to a failing test"""
+    _class = compile_as_module_and_run_file_test(*a, **k)
+
+    class FailingTest(_class):
+        """Failing test"""
+        @unittest.expectedFailure
+        def runTest(self):
+            return super(FailingTest, self).runTest()
+
+    return FailingTest

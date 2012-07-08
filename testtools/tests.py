@@ -54,6 +54,7 @@ def create_cases():
                 )
             )
 
+    test_paths_module_postfix = "as_module"
     test_paths = glob.glob("tests/*/*.py")
     test_paths.sort()
     for test_path in test_paths:
@@ -61,7 +62,6 @@ def create_cases():
             test_path.replace("\\","/") not 
             in known_to_fail.KNOWN_TO_FAIL
             ):
-            # test standard result
             test_cases.addTest(
                 unittest.TestLoader().loadTestsFromTestCase(
                     util.compile_and_run_file_test(
@@ -70,20 +70,7 @@ def create_cases():
                         )
                     )
                 )
-
-            # also test as module
-            module_test_cases.addTest(
-                unittest.TestLoader().loadTestsFromTestCase(
-                    util.compile_as_module_and_run_file_test(
-                        test_path, 
-                        os.path.basename(test_path),
-                        uses_imports = False,
-                        output_postfix = "as_module"
-                        )
-                    )
-                )
         else:
-            # test standard result
             failing_test_cases.addTest(
                 unittest.TestLoader().loadTestsFromTestCase(
                     util.compile_and_run_file_failing_test(
@@ -92,18 +79,34 @@ def create_cases():
                         )
                     )
                 )
-            
-            # also test as module
-            module_failing_test_cases.addTest(
+        
+        if (
+                util.postfix_path_filename(
+                    test_path.replace("\\","/"), 
+                    test_paths_module_postfix
+                ) not in known_to_fail.KNOWN_TO_FAIL
+            ):
+            module_test_cases.addTest(
                 unittest.TestLoader().loadTestsFromTestCase(
                     util.compile_as_module_and_run_file_test(
                         test_path, 
                         os.path.basename(test_path),
                         uses_imports = False,
-                        output_postfix = "as_module"
-                        )
+                        output_postfix = test_paths_module_postfix
                     )
                 )
+            )
+        else:
+            module_failing_test_cases.addTest(
+                unittest.TestLoader().loadTestsFromTestCase(
+                    util.compile_as_module_and_run_file_failing_test(
+                        test_path, 
+                        os.path.basename(test_path),
+                        uses_imports = False,
+                        output_postfix = test_paths_module_postfix
+                    )
+                )
+            )
             
     test_paths = glob.glob("tests/as_module/simple/*.py")
     test_paths.sort()
@@ -144,7 +147,7 @@ def create_cases():
         else:
             module_failing_test_cases.addTest(
                 unittest.TestLoader().loadTestsFromTestCase(
-                    util.compile_as_module_and_run_file_test(
+                    util.compile_as_module_and_run_file_failing_test(
                         test_path, 
                         os.path.basename(test_path),
                         uses_imports = True
