@@ -69,6 +69,22 @@ def main():
         default=False,
         help="clean tests before running"
         )
+    option_parser.add_option(
+        "-m",
+        "--as-modules",
+        action="store_true",
+        dest="as_modules",
+        default=False,
+        help="run tests as modules"
+        )
+    option_parser.add_option(
+        "-s",
+        "--as-standard",
+        action="store_true",
+        dest="as_standard",
+        default=False,
+        help="run tests as standard"
+        )
     options, args = option_parser.parse_args()
     
     with open("py-builtins.js", "w") as f:
@@ -86,13 +102,28 @@ def main():
     results = None
     try:
         if options.run_all:
-            results = runner.run(testtools.tests.ALL)
+            if options.as_modules:
+                results = runner.run(testtools.tests.ALL_MODULES)
+            elif options.as_standard:
+                results = runner.run(testtools.tests.ALL_STANDARD)
+            else:
+                results = runner.run(testtools.tests.ALL)
         elif options.only_failing:
-            results = runner.run(testtools.tests.KNOWN_TO_FAIL)
+            if options.as_modules:
+                results = runner.run(testtools.tests.MODULE_KNOWN_TO_FAIL)
+            elif options.as_standard:
+                results = runner.run(testtools.tests.STANDARD_KNOWN_TO_FAIL)
+            else:
+                results = runner.run(testtools.tests.KNOWN_TO_FAIL)
         elif args:
             results = runner.run(testtools.tests.get_tests(args))
         else:
-            results = runner.run(testtools.tests.NOT_KNOWN_TO_FAIL)
+            if options.as_modules:
+                results = runner.run(testtools.tests.MODULE_NOT_KNOWN_TO_FAIL)
+            elif options.as_standard:
+                results = runner.run(testtools.tests.STANDARD_NOT_KNOWN_TO_FAIL)
+            else:
+                results = runner.run(testtools.tests.NOT_KNOWN_TO_FAIL)
     except KeyboardInterrupt:
         pass
     if not options.no_error and results and results.errors:

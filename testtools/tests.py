@@ -20,6 +20,8 @@ def create_cases():
         )
 
     failing_test_cases = unittest.TestSuite()
+    module_test_cases = unittest.TestSuite()
+    module_failing_test_cases = unittest.TestSuite()
 
     test_paths = glob.glob("tests/test_*.py")
     test_paths.sort()
@@ -32,7 +34,7 @@ def create_cases():
             )
         
         # also test as module
-        test_cases.addTest(
+        module_test_cases.addTest(
             unittest.TestLoader().loadTestsFromTestCase(    
                 util.compile_as_module_and_run_file_test(
                     test_path, 
@@ -70,7 +72,7 @@ def create_cases():
                 )
 
             # also test as module
-            test_cases.addTest(
+            module_test_cases.addTest(
                 unittest.TestLoader().loadTestsFromTestCase(
                     util.compile_as_module_and_run_file_test(
                         test_path, 
@@ -81,11 +83,24 @@ def create_cases():
                     )
                 )
         else:
+            # test standard result
             failing_test_cases.addTest(
                 unittest.TestLoader().loadTestsFromTestCase(
                     util.compile_and_run_file_failing_test(
                         test_path, 
                         os.path.basename(test_path)
+                        )
+                    )
+                )
+            
+            # also test as module
+            module_failing_test_cases.addTest(
+                unittest.TestLoader().loadTestsFromTestCase(
+                    util.compile_as_module_and_run_file_test(
+                        test_path, 
+                        os.path.basename(test_path),
+                        uses_imports = False,
+                        output_postfix = "as_module"
                         )
                     )
                 )
@@ -113,20 +128,39 @@ def create_cases():
     test_paths = temp
     test_paths.sort()
     for test_path in test_paths:
-        test_cases.addTest(
-            unittest.TestLoader().loadTestsFromTestCase(
-                util.compile_as_module_and_run_file_test(
-                    test_path, 
-                    os.path.basename(test_path),
-                    uses_imports = True
+        if (
+            test_path.replace("\\","/") not 
+            in known_to_fail.KNOWN_TO_FAIL
+        ):
+            module_test_cases.addTest(
+                unittest.TestLoader().loadTestsFromTestCase(
+                    util.compile_as_module_and_run_file_test(
+                        test_path, 
+                        os.path.basename(test_path),
+                        uses_imports = True
+                        )
                     )
                 )
-            )
+        else:
+            module_failing_test_cases.addTest(
+                unittest.TestLoader().loadTestsFromTestCase(
+                    util.compile_as_module_and_run_file_test(
+                        test_path, 
+                        os.path.basename(test_path),
+                        uses_imports = True
+                        )
+                    )
+                )
         
-    return test_cases , failing_test_cases
+    return test_cases, failing_test_cases, module_test_cases, module_failing_test_cases
 
-NOT_KNOWN_TO_FAIL, KNOWN_TO_FAIL = create_cases()
-ALL = unittest.TestSuite((NOT_KNOWN_TO_FAIL, KNOWN_TO_FAIL))
+STANDARD_NOT_KNOWN_TO_FAIL, STANDARD_KNOWN_TO_FAIL, MODULE_NOT_KNOWN_TO_FAIL, MODULE_KNOWN_TO_FAIL = create_cases()
+
+ALL = unittest.TestSuite((STANDARD_NOT_KNOWN_TO_FAIL, STANDARD_KNOWN_TO_FAIL, MODULE_NOT_KNOWN_TO_FAIL, MODULE_KNOWN_TO_FAIL))
+ALL_MODULES = unittest.TestSuite((MODULE_NOT_KNOWN_TO_FAIL, MODULE_KNOWN_TO_FAIL))
+ALL_STANDARD = unittest.TestSuite((STANDARD_NOT_KNOWN_TO_FAIL, STANDARD_KNOWN_TO_FAIL))
+NOT_KNOWN_TO_FAIL = unittest.TestSuite((STANDARD_NOT_KNOWN_TO_FAIL, MODULE_NOT_KNOWN_TO_FAIL))
+KNOWN_TO_FAIL = unittest.TestSuite((STANDARD_KNOWN_TO_FAIL, MODULE_KNOWN_TO_FAIL))
 
 def get_tests(names):
     """filters out all tests that don't exist in names and
