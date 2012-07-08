@@ -166,9 +166,12 @@ ALL_STANDARD = unittest.TestSuite((STANDARD_NOT_KNOWN_TO_FAIL, STANDARD_KNOWN_TO
 NOT_KNOWN_TO_FAIL = unittest.TestSuite((STANDARD_NOT_KNOWN_TO_FAIL, MODULE_NOT_KNOWN_TO_FAIL))
 KNOWN_TO_FAIL = unittest.TestSuite((STANDARD_KNOWN_TO_FAIL, MODULE_KNOWN_TO_FAIL))
 
-def get_tests(names):
+def get_tests(names, test_suite=None):
     """filters out all tests that don't exist in names and
     adds them to a new test suite"""
+    if test_suite is None:
+        test_suite = ALL
+    
     def flatten(itr):
         """tries to flatten out a suite to the individual tests"""
         import itertools
@@ -183,7 +186,7 @@ def get_tests(names):
             env_tests.EnviromentTest
             )
         )
-    for suite in flatten(iter(ALL)):
+    for suite in flatten(iter(test_suite)):
         test_name = str(suite._tests[0])
         if any(True for name in names if name in test_name):
             return_suite.addTest(suite)

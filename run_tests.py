@@ -116,7 +116,13 @@ def main():
             else:
                 results = runner.run(testtools.tests.KNOWN_TO_FAIL)
         elif args:
-            results = runner.run(testtools.tests.get_tests(args))
+            if options.as_modules:
+                suite = testtools.tests.get_tests(args, test_suite=testtools.tests.ALL_MODULES)
+            elif options.as_standard:
+                suite = testtools.tests.get_tests(args, test_suite=testtools.tests.ALL_STANDARD)
+            else:
+                suite = testtools.tests.get_tests(args)
+            runner.run(suite)
         else:
             if options.as_modules:
                 results = runner.run(testtools.tests.MODULE_NOT_KNOWN_TO_FAIL)
