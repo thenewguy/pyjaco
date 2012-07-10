@@ -29,6 +29,8 @@ import pyjaco.compiler.python
 import pyjaco.compiler.javascript
 import pyjaco.compiler.multiplexer
 import re
+import tokenize
+import keyword
 import StringIO
 import ast
 import inspect
@@ -163,6 +165,16 @@ class Compiler(object):
         dotted = os.path.splitext(filename)[0].replace('/', '.')
         if dotted.endswith('.__init__'):
             dotted = dotted[:-9]
+        
+        # verify dotted path is valid
+        for part in dotted.split("."):
+            if keyword.iskeyword(part) or not re.match("%s$" % tokenize.Name, part):
+                raise SyntaxError("Invalid identifier '%s' in dotted module path '%s' for file path '%s'" % (
+                        part,
+                        dotted,
+                        path
+                    )
+                )
         
         # make the module name available to the compilers
         self.shared_state["module"] = dotted
