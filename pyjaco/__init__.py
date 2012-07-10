@@ -39,7 +39,7 @@ try:
     from _version import get_version, parse_version
 except ImportError:
     from .._version import get_version, parse_version
-from compiler.utils import special_globals, dotted_to_hierarchy
+from compiler.utils import special_globals, create_dotted_path, dotted_to_hierarchy
 
 __version__ = get_version()
 __version_info__ = parse_version(__version__)
@@ -155,16 +155,7 @@ class Compiler(object):
 
     def append_module(self, code, path, base = None):
         # determine module name characteristics
-        path = os.path.abspath(path)
-        if base is None:
-            base = os.getcwd()
-        base = os.path.abspath(base)
-        commonprefix = os.path.commonprefix([path, base])
-        path, base, commonprefix = [x.replace('\\','/') for x in (path, base, commonprefix)]
-        filename = path[len(commonprefix):].lstrip('/')
-        dotted = os.path.splitext(filename)[0].replace('/', '.')
-        if dotted.endswith('.__init__'):
-            dotted = dotted[:-9]
+        (path, base, filename, dotted) = create_dotted_path(path, base)
         
         # verify dotted path is valid
         for part in dotted.split("."):
@@ -175,7 +166,7 @@ class Compiler(object):
                         path
                     )
                 )
-        
+
         # make the module name available to the compilers
         self.shared_state["module"] = dotted
         

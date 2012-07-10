@@ -11,6 +11,7 @@ import os
 import subprocess
 import posixpath
 from os.path import split, splitext
+from pyjaco.compiler.utils import create_dotted_path
 
 def run_command(cmd):
     return subprocess.call(cmd, shell = True)
@@ -179,7 +180,7 @@ def postfix_path_filename(file_path, output_postfix=None):
         output_path = file_path
     return output_path
 
-def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfix=None, uses_imports = False):
+def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfix=None, uses_imports = False, base = None):
     """Creates a test that compiles as a module and runs the python file as js"""
     file_name = file_name if file_name else file_path
 
@@ -199,6 +200,7 @@ def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfi
             "js_error": output_path + ".js.err",
             "compiler_error": output_path + ".comp.err",
             "name": file_name,
+            "base": '--base "%s"' % base if base else ''
         }
         def reportProgres(self):
             """Should be overloaded by the test result class"""
@@ -220,7 +222,7 @@ def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfi
             except OSError:
                 mtime_js_res = 0
             compile_command = (
-                '%(py_executable)s pyjs.py -I -q -m '
+                '%(py_executable)s pyjs.py -I -q --as-module %(base)s '
                 '"%(py_path)s" > "%(js_path)s" 2> '
                 '"%(compiler_error)s"'
                 ) % self.templ 
@@ -238,10 +240,11 @@ def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfi
                             continue
                         js_path = py_path + ".js"
                         cmd = (
-                            '%(py_executable)s pyjs.py -q -m '
+                            '%(py_executable)s pyjs.py -q --as-module %(base)s '
                             '"%(py_path)s" > "%(js_path)s"'
                         ) % {
                              "py_executable": self.templ["py_executable"],
+                             "base": self.templ["base"],
                              "py_path": py_path,
                              "js_path": js_path
                         }
@@ -254,9 +257,11 @@ def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfi
                 '"%(js_error)s"' 
                 ) % templ
                 
+            # determine module name characteristics for the run file
+            dotted = create_dotted_path(self.templ["py_path"], base)[-1]
+            
             # create javascript run file
             with open(self.templ['js_run_file'], 'w') as f:
-                dotted = os.path.splitext(self.templ['py_path'])[0].replace("\\","/").replace("/",".")
                 f.write("\n")
                 f.write("$PY.run_module('%s', '__main__')" % dotted)
 

@@ -44,8 +44,4 @@ KNOWN_TO_FAIL = [
     
     "tests/modules/rng.py",
     "tests/modules/rng_as_module.py",
-    
-    "tests/import/module_name/module_name.py"# javascript module path is different from
-                                             # python module path so equality fails, but
-                                             # what the test is actually testing passes
-    ]
+]

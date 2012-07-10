@@ -37,10 +37,11 @@ def create_cases():
         module_test_cases.addTest(
             unittest.TestLoader().loadTestsFromTestCase(    
                 util.compile_as_module_and_run_file_test(
-                    test_path, 
-                    os.path.basename(test_path),
-                    uses_imports = False,
-                    output_postfix = "as_module"
+                        test_path, 
+                        os.path.basename(test_path),
+                        uses_imports = False,
+                        output_postfix = "as_module",
+                        base = os.path.dirname(test_path).replace("\\", "/")
                     )
                 )
             )
@@ -93,7 +94,8 @@ def create_cases():
                         test_path, 
                         os.path.basename(test_path),
                         uses_imports = False,
-                        output_postfix = test_paths_module_postfix
+                        output_postfix = test_paths_module_postfix,
+                        base = os.path.dirname(test_path).replace("\\", "/")
                     )
                 )
             )
@@ -104,7 +106,8 @@ def create_cases():
                         test_path, 
                         os.path.basename(test_path),
                         uses_imports = False,
-                        output_postfix = test_paths_module_postfix
+                        output_postfix = test_paths_module_postfix,
+                        base = os.path.dirname(test_path).replace("\\", "/")
                     )
                 )
             )
@@ -115,8 +118,8 @@ def create_cases():
         test_cases.addTest(
             unittest.TestLoader().loadTestsFromTestCase(
                 util.compile_as_module_and_run_file_test(
-                    test_path, 
-                    os.path.basename(test_path)
+                        test_path, 
+                        os.path.basename(test_path)
                     )
                 )
             )
@@ -139,9 +142,10 @@ def create_cases():
             module_test_cases.addTest(
                 unittest.TestLoader().loadTestsFromTestCase(
                     util.compile_as_module_and_run_file_test(
-                        test_path, 
-                        os.path.basename(test_path),
-                        uses_imports = True
+                            test_path, 
+                            os.path.basename(test_path),
+                            uses_imports = True,
+                            base = os.path.dirname(test_path).replace("\\", "/")
                         )
                     )
                 )
@@ -149,9 +153,10 @@ def create_cases():
             module_failing_test_cases.addTest(
                 unittest.TestLoader().loadTestsFromTestCase(
                     util.compile_as_module_and_run_file_failing_test(
-                        test_path, 
-                        os.path.basename(test_path),
-                        uses_imports = True
+                            test_path, 
+                            os.path.basename(test_path),
+                            uses_imports = True,
+                            base = os.path.dirname(test_path).replace("\\", "/")
                         )
                     )
                 )
