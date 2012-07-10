@@ -44,4 +44,7 @@ KNOWN_TO_FAIL = [
     
     "tests/modules/rng.py",
     "tests/modules/rng_as_module.py",
+    
+    "tests/basic/try_finally_simple.py",
+    "tests/basic/try_finally_simple_as_module.py",
 ]
