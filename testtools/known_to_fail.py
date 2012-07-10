@@ -24,11 +24,11 @@ KNOWN_TO_FAIL = [
     "tests/functions/cmp.py",
     "tests/functions/cmp_as_module.py",
     
-    "tests/operator/int-class-priority.py",
-    "tests/operator/int-class-priority_as_module.py",
+    "tests/operator/int_class_priority.py",
+    "tests/operator/int_class_priority_as_module.py",
     
-    "tests/operator/type-comparison.py",
-    "tests/operator/type-comparison_as_module.py",
+    "tests/operator/type_comparison.py",
+    "tests/operator/type_comparison_as_module.py",
     
     "tests/flow/yield.py",
     "tests/flow/yield_as_module.py",
