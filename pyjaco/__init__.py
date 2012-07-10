@@ -35,6 +35,7 @@ import StringIO
 import ast
 import inspect
 import os
+import warnings
 try:
     from _version import get_version, parse_version
 except ImportError:
@@ -159,7 +160,10 @@ class Compiler(object):
         
         # verify dotted path is valid
         for part in dotted.split("."):
-            if keyword.iskeyword(part) or not re.match("%s$" % tokenize.Name, part):
+            if keyword.iskeyword(part):
+                warning = "You should avoid using the keyword '%s' in your package path." % part
+                warnings.warn(warning, SyntaxWarning)
+            if not re.match("%s$" % tokenize.Name, part):
                 raise SyntaxError("Invalid identifier '%s' in dotted module path '%s' for file path '%s'" % (
                         part,
                         dotted,
