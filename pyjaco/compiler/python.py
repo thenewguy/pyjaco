@@ -812,29 +812,50 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         else:
             raise JSError("Unsupported target type in list comprehension")
         iter_var = self.alloc_var()
-        res = "var %s; for (var %s = iter(%s); %s = $PY.next(%s); %s !== null) {\n" % (var, iter_var, self.visit(node.iter), var, iter_var, var)
+        
+        js = []
+        js.append("var %s;" % var)
+        js.append("for (var %s = iter(%s); %s = $PY.next(%s); %s !== null) {" % (
+                iter_var,
+                self.visit(node.iter),
+                var,
+                iter_var,
+                var
+            )
+        )
         if isinstance(node.target, ast.Tuple):
             for i, el in enumerate(node.target.elts):
                 if isinstance(el, ast.Name):
                     n = self.visit(el)
                 else:
                     raise JSError("Invalid tuple element in list comprehension")
-                res += "var %s = %s.PY$__getitem__($c%d);\n" % (n, var, i)
+                js.append("%svar %s = %s.PY$__getitem__($c%d);" % (self.indention, n, var, i))
 
         if node.ifs:
             ifexp = []
             for exp in node.ifs:
                 ifexp.append("bool(%s) === False" % self.visit(exp))
-            res += "if (%s) { continue; }" % (" || ".join(ifexp))
-        return res
+            js.append("if (%s) { continue; }" % (" || ".join(ifexp)))
+        return "\n".join(js)
 
     def visit_ListComp(self, node):
+        self.push_scope()
+        js = []
         res_var = self.alloc_var()
-        exp = "%s.PY$append(%s)" % (res_var, self.visit(node.elt))
+        js.append("%svar %s = list();" % (self.indention, res_var))
         for x in node.generators:
-            exp = "%s %s}" % (self.visit(x), exp)
-
-        return "(function() {var %s = list(); %s; return %s})()" % (res_var, exp, res_var)
+            for line in self.visit(x).split("\n"):
+                js.append("%s%s" % (self.indention, line))
+        js.append("%s%s.PY$append(%s);" % (self.indention*2, res_var, self.visit(node.elt)))
+        js.append("%s}" % self.indention)
+        js.append("%sreturn %s;" % (self.indention, res_var))
+        js.append("})()")
+        self.pop_scope()
+        return "\n".join(chain(
+                ("(function() {",),
+                self.indent(js),
+            )
+        )
 
     def visit_GeneratorExp(self, node):
         if not len(node.generators) == 1:
