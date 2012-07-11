@@ -391,7 +391,22 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         for_cond = "%s !== null" % (for_target)
         js.append("for (%s; %s; %s) {" % (for_init, for_iter, for_cond))
         if isinstance(node.target, ast.Tuple):
-            js.append("    %s;" % "; ".join(["var %s = %s.PY$__getitem__(%s)" % (x.id, for_target, i) for i, x in enumerate(node.target.elts)]))
+            for i, x in enumerate(node.target.elts):
+                var = self.visit(x)
+                declare = ""
+                if isinstance(var, ast.Name):
+                    if not var in self._global_identifiers and not var in self.scope:
+                        self._vars.append(var)
+                        if not self.module or not var.startswith(self.module_ref):
+                            declare = "var "
+                js.append("%s%s%s = %s.PY$__getitem__(%s);" % (
+                        self.indention,
+                        declare,
+                        var,
+                        for_target,
+                        i
+                    )
+                )
 
         for stmt in node.body:
             js.extend(self.indent(self.visit(stmt)))
