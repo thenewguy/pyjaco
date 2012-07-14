@@ -334,6 +334,8 @@ class Compiler(pyjaco.compiler.BaseCompiler):
 
     def visit_For(self, node):
         if isinstance(node.target, ast.Name):
+            if self.module and not self.scope_is_global and not node.target.id in self.local_scope:
+                self._vars.append(node.target.id)
             for_target = self.visit(node.target)
         elif isinstance(node.target, ast.Tuple):
             for_target = self.alloc_var()
