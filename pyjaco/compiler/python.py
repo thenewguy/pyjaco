@@ -288,13 +288,14 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             js = ["var %s = %s;" % (dummy, value)]
 
             for i, target in enumerate(target.elts):
-                var = self.visit(target)
                 declare = ""
                 if isinstance(target, ast.Name):
-                    if not var in self._global_identifiers and not var in self._vars:
+                    var = target.id
+                    if not var in self._global_identifiers and not var in self.local_scope:
                         self._vars.append(var)
                         if not self.module or not var.startswith(self.module_ref):
                             declare = "var "
+                var = self.visit(target)
                 js.append("%s%s = %s.PY$__getitem__(%d);" % (declare, var, dummy, i))
         elif isinstance(target, ast.Subscript) and isinstance(target.slice, ast.Index):
             # found index assignment
