@@ -663,6 +663,9 @@ class Compiler(pyjaco.compiler.BaseCompiler):
 
     def visit_Lambda(self, node):
         self.push_scope()
+        for arg in node.args.args:
+            if isinstance(arg, ast.Name):
+                self._vars.append(arg.id)
         node_args = self.visit(node.args)
         node_body = self.visit(node.body)
         self.pop_scope()
