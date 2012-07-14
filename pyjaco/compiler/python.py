@@ -138,14 +138,19 @@ class Compiler(pyjaco.compiler.BaseCompiler):
 
         inclass = self.stack_destiny(["ClassDef", "FunctionDef"], 2) in ["ClassDef"]
 
-        if inclass:
-            js = ["function() {"]
-        elif self.module:
-            js = ["%s = function() {" % self.build_ref(node.name)]
-            self._funcs.append(self.build_ref(node.name))
-        else:
-            js = ["var %s = function() {" % (node.name)]
-            self._funcs.append(node.name)
+        declare = ""
+        func = ""
+        if not inclass:
+            if self.scope_is_global and self.module:
+                func = self.build_ref(node.name)
+            else:
+                func = node.name
+            if not self.module or not func.startswith(self.module_ref):
+                declare = "var "
+
+        js = ["%s%s%sfunction() {" % (declare, func, " = " if func else "")]
+        if func:
+            self._funcs.append(func)
 
         self.push_scope()
 
