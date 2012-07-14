@@ -779,7 +779,15 @@ class Compiler(pyjaco.compiler.BaseCompiler):
 
         js_args = ", ".join([ self.visit(arg) for arg in node.args ] + varargs + kwargs)
 
-        js.append("%s(%s)" % (func, js_args))
+        if isinstance(node.func, ast.Name) and not func.startswith("__builtins__.PY$") and self.module and not func in self.local_scope:
+            js.append("((typeof %(f)s !== 'undefined') ? %(f)s(%(a)s) : %(m)s(%(a)s))" % {
+                    "f": func,
+                    "a": js_args,
+                    "m": self.build_ref(func)
+                }
+            )
+        else:
+            js.append("%s(%s)" % (func, js_args))
 
         return "\n".join(js)
 
