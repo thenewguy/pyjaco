@@ -293,7 +293,8 @@ class Compiler(pyjaco.compiler.BaseCompiler):
                 if isinstance(target, ast.Name):
                     if not var in self._global_identifiers and not var in self._vars:
                         self._vars.append(var)
-                        declare = "var "
+                        if not self.module or not var.startswith(self.module_ref):
+                            declare = "var "
                 js.append("%s%s = %s.PY$__getitem__(%d);" % (declare, var, dummy, i))
         elif isinstance(target, ast.Subscript) and isinstance(target.slice, ast.Index):
             # found index assignment
