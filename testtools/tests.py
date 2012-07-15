@@ -8,6 +8,8 @@ import unittest
 import glob
 import os
 
+test_paths_module_postfix = "as_module"
+
 def create_cases():
     """Helper function to find all tests in the test folders
     and wrapping them into the correct test class"""
@@ -56,7 +58,6 @@ def create_cases():
                     )
                 )
 
-    test_paths_module_postfix = "as_module"
     test_paths = glob.glob("tests/*/*.py")
     test_paths.sort()
     for test_path in test_paths:
@@ -171,12 +172,7 @@ ALL_STANDARD = unittest.TestSuite((STANDARD_NOT_KNOWN_TO_FAIL, STANDARD_KNOWN_TO
 NOT_KNOWN_TO_FAIL = unittest.TestSuite((STANDARD_NOT_KNOWN_TO_FAIL, MODULE_NOT_KNOWN_TO_FAIL))
 KNOWN_TO_FAIL = unittest.TestSuite((STANDARD_KNOWN_TO_FAIL, MODULE_KNOWN_TO_FAIL))
 
-def get_tests(names, test_suite=None):
-    """filters out all tests that don't exist in names and
-    adds them to a new test suite"""
-    if test_suite is None:
-        test_suite = ALL
-    
+def get_test_names_in_suite(test_suite):
     def flatten(itr):
         """tries to flatten out a suite to the individual tests"""
         import itertools
@@ -184,15 +180,27 @@ def get_tests(names, test_suite=None):
             return itertools.chain.from_iterable(flatten(item) for item in iter)
         except TypeError:
             return itertools.chain(*itr)
+    l = []
+    for suite in flatten(iter(test_suite)):
+        try:
+            l.append((suite, str(suite._tests[0])))
+        except AttributeError:
+            l.append((suite, str(suite)))
+    return l
 
+def get_tests(names, test_suite=None):
+    """filters out all tests that don't exist in names and
+    adds them to a new test suite"""
+    if test_suite is None:
+        test_suite = ALL
+    
     return_suite = unittest.TestSuite()
     return_suite.addTest(
         unittest.TestLoader().loadTestsFromTestCase(
             env_tests.EnviromentTest
             )
         )
-    for suite in flatten(iter(test_suite)):
-        test_name = str(suite._tests[0])
+    for suite, test_name in get_test_names_in_suite(test_suite):
         if any(True for name in names if name in test_name):
             return_suite.addTest(suite)
     return return_suite

@@ -31,6 +31,13 @@ def should_remove(name):
             return True
     return False
 
+def write_to_qunit(fp, content, level=0):
+    indent = "\t" * level
+    if isinstance(content, basestring):
+        content = content.splitlines()
+    content = ("\n%s" % indent).join(content)
+    fp.write(indent + content + "\n")
+
 def main():
     installHandler()
     option_parser = optparse.OptionParser(
@@ -94,6 +101,14 @@ def main():
         default="js",
         help="specify the javascript executable to use"
         )
+    option_parser.add_option(
+        "-q",
+        "--qunit",
+        action="store_true",
+        dest="qunit",
+        default=False,
+        help="create qunit tests"
+        )
     options, args = option_parser.parse_args()
     
     testtools.util.js_exec = options.js_exec
@@ -118,38 +133,108 @@ def main():
                     
     runner = testtools.runner.Py2JsTestRunner(verbosity=2)
     results = None
+    test_suites = None
+    qunit_title = ""
     try:
         if options.run_all:
             if options.as_modules:
-                results = runner.run(testtools.tests.ALL_MODULES)
+                test_suites = testtools.tests.ALL_MODULES
+                qunit_title = "ALL_MODULES"
             elif options.as_standard:
-                results = runner.run(testtools.tests.ALL_STANDARD)
+                test_suites = testtools.tests.ALL_STANDARD
+                qunit_title = "ALL_STANDARD"
             else:
-                results = runner.run(testtools.tests.ALL)
+                test_suites = testtools.tests.ALL
+                qunit_title = "ALL"
         elif options.only_failing:
             if options.as_modules:
-                results = runner.run(testtools.tests.MODULE_KNOWN_TO_FAIL)
+                test_suites = testtools.tests.MODULE_KNOWN_TO_FAIL
+                qunit_title = "MODULE_KNOWN_TO_FAIL"
             elif options.as_standard:
-                results = runner.run(testtools.tests.STANDARD_KNOWN_TO_FAIL)
+                test_suites = testtools.tests.STANDARD_KNOWN_TO_FAIL
+                qunit_title = "STANDARD_KNOWN_TO_FAIL"
             else:
-                results = runner.run(testtools.tests.KNOWN_TO_FAIL)
+                test_suites = testtools.tests.KNOWN_TO_FAIL
+                qunit_title = "KNOWN_TO_FAIL"
         elif args:
             if options.as_modules:
-                suite = testtools.tests.get_tests(args, test_suite=testtools.tests.ALL_MODULES)
+                test_suites = testtools.tests.get_tests(args, test_suite=testtools.tests.ALL_MODULES)
             elif options.as_standard:
-                suite = testtools.tests.get_tests(args, test_suite=testtools.tests.ALL_STANDARD)
+                test_suites = testtools.tests.get_tests(args, test_suite=testtools.tests.ALL_STANDARD)
             else:
-                suite = testtools.tests.get_tests(args)
-            runner.run(suite)
+                test_suites = testtools.tests.get_tests(args)
+            qunit_title = "CUSTOM"
         else:
             if options.as_modules:
-                results = runner.run(testtools.tests.MODULE_NOT_KNOWN_TO_FAIL)
+                test_suites = testtools.tests.MODULE_NOT_KNOWN_TO_FAIL
+                qunit_title = "MODULE_NOT_KNOWN_TO_FAIL"
             elif options.as_standard:
-                results = runner.run(testtools.tests.STANDARD_NOT_KNOWN_TO_FAIL)
+                test_suites = testtools.tests.STANDARD_NOT_KNOWN_TO_FAIL
+                qunit_title = "STANDARD_NOT_KNOWN_TO_FAIL"
             else:
-                results = runner.run(testtools.tests.NOT_KNOWN_TO_FAIL)
+                test_suites = testtools.tests.NOT_KNOWN_TO_FAIL
+                qunit_title = "NOT_KNOWN_TO_FAIL"
+        results = runner.run(test_suites)
     except KeyboardInterrupt:
         pass
+    if options.qunit:
+        output_dir = os.path.join(os.getcwd(), "QUnit/")
+        try:
+            os.makedirs(output_dir)
+        except:
+            pass
+        with open(os.path.join(output_dir, "tests.js"), "wb") as fp:
+            qunit_suites = []
+            for suite, name in testtools.tests.get_test_names_in_suite(test_suites):
+                if hasattr(suite, "templ"):
+                    qunit_suites.append(suite)
+            for suite in qunit_suites:
+                py_out_path = os.path.join(os.getcwd(), suite.templ["py_out_path"])
+                py_js_path = os.path.join(os.getcwd(), suite.templ["js_path"])
+                if "js_run_file" in suite.templ:
+                    py_js_run_file_path = os.path.join(os.getcwd(), suite.templ["js_run_file"])
+                else:
+                    py_js_run_file_path = ""
+                write_to_qunit(fp, 'test("%s", function() {' % suite.templ["js_path"].replace("\\", "/"))
+                write_to_qunit(fp, 'var output = "";', 1)
+                write_to_qunit(fp, "var console = {};", 1)
+                write_to_qunit(fp, "console.log = function(input) {", 1)
+                write_to_qunit(fp, "output += input + '\\n';", 2)
+                write_to_qunit(fp, "}", 1)
+                write_to_qunit(fp, builtins, 1)
+                with open(py_js_path, "rb") as py_js:
+                    content = py_js.read().splitlines()
+                    if content:
+                        del content[0]# remove 'load("py-builtins.js");'
+                    write_to_qunit(fp, content, 1)
+                if py_js_run_file_path:
+                    with open(py_js_run_file_path, "rb") as py_js_run_file:
+                        write_to_qunit(fp, py_js_run_file.read(), 1)
+                with open(py_out_path, "rb") as py_out:
+                    output = py_out.read().splitlines()
+                    output = "\\n".join(output)
+                    output = output.replace('"', '\"')
+                    write_to_qunit(fp, 'var py_out = "%s";' % output, 1)
+                write_to_qunit(fp, "equal(output.replace(/\\n$/g,''), py_out);", 1)
+                write_to_qunit(fp, "});")
+        with open(os.path.join(output_dir, "tests.html"), "wb") as fp:
+            output = """
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Pyjaco QUnit Tests -- %s</title>
+        <link rel="stylesheet" href="qunit.css">
+        <script src="qunit.js"></script>
+        <script src="tests.js"></script>
+    </head>
+    <body>
+        <div id="qunit"></div>
+        <div id="qunit-fixture"></div>
+    </body>
+</html>
+            """ % qunit_title
+            fp.write(output.strip())
     if not options.no_error and results and results.errors:
         print
         print "errors:"
