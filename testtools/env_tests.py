@@ -9,7 +9,7 @@ if sys.version_info < (2, 7):
 else:
     import unittest
 import tempfile
-from util import run_command
+from util import run_command, get_js_exec
 
 class EnviromentTest(unittest.TestCase):
     "Test case that makes sure that the environment is up and working"
@@ -21,13 +21,15 @@ class EnviromentTest(unittest.TestCase):
 
     def runTest(self):
         """The actual test goes here."""
-        if run_command(
-            "echo | js > %s" %
+        js_exec = get_js_exec()
+        cmd = 'echo | "%s" > "%s"' % (
+            js_exec,
             os.path.join(
                 tempfile.gettempdir(),
                 tempfile.gettempprefix()
-                )
-            ):
+            )
+        )
+        if run_command(cmd):
             self.stop()
             raise RuntimeError("""Can't find the "js" command.""")
         self.reportProgres()

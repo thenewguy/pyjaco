@@ -13,6 +13,10 @@ import posixpath
 from os.path import split, splitext
 from pyjaco.compiler.utils import create_dotted_path
 
+js_exec = "js"
+def get_js_exec():
+    return js_exec
+
 def run_command(cmd):
     return subprocess.call(cmd, shell = True)
 
@@ -43,8 +47,9 @@ def run_with_stdlib(file_path, file_name=None):
     
         def runTest(self):
             """The actual test goes here."""
+            self.templ.update(js_exec=js_exec)
             cmd = (
-                  'js -f "py-builtins.js" '
+                  '"%(js_exec)s" -f "py-builtins.js" '
                   '-f "%(js_path)s" > "%(js_out_path)s" 2> "%(js_error)s"'
                   )% self.templ
             self.assertEqual(0, run_command(cmd))
@@ -113,6 +118,7 @@ def compile_and_run_file_test(file_path, file_name=None):
 
         def runTest(self):
             """The actual test goes here."""
+            self.templ.update(js_exec=js_exec)
             mtime_src = os.path.getmtime(self.templ['py_path'])
             try:
                 mtime_py_res = os.path.getmtime(self.templ['py_out_path'])
@@ -134,7 +140,7 @@ def compile_and_run_file_test(file_path, file_name=None):
                 ) % self.templ 
 
             javascript_command = (
-                'js -f "%(js_path)s" > "%(js_out_path)s" 2> '
+                '"%(js_exec)s" -f "%(js_path)s" > "%(js_out_path)s" 2> '
                 '"%(js_error)s"' 
                 ) % self.templ
 
@@ -207,6 +213,7 @@ def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfi
 
         def runTest(self):
             """The actual test goes here."""
+            self.templ.update(js_exec=js_exec)
             mtime_src = os.path.getmtime(self.templ['py_path'])
             try:
                 mtime_py_res = os.path.getmtime(self.templ['py_out_path'])
@@ -253,7 +260,7 @@ def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfi
                         
             
             javascript_command = (
-                'js -f "%(js_path)s" %(import_js)s -f "%(js_run_file)s" > "%(js_out_path)s" 2> '
+                '"%(js_exec)s" -f "%(js_path)s" %(import_js)s -f "%(js_run_file)s" > "%(js_out_path)s" 2> '
                 '"%(js_error)s"' 
                 ) % templ
                 

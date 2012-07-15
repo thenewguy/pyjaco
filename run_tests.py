@@ -85,7 +85,25 @@ def main():
         default=False,
         help="run tests as standard"
         )
+    option_parser.add_option(
+        "-j",
+        "--js-exec",
+        action="store",
+        type="string",
+        dest="js_exec",
+        default="js",
+        help="specify the javascript executable to use"
+        )
     options, args = option_parser.parse_args()
+    
+    testtools.util.js_exec = options.js_exec
+    
+    heading = 'Running tests with "%s"' % testtools.util.js_exec
+    print ""
+    print "~" * len(heading)
+    print heading
+    print "~" * len(heading)
+    print ""
     
     with open("py-builtins.js", "w") as f:
         builtins = BuiltinGenerator().generate_builtins()
