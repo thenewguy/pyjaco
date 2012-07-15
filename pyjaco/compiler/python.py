@@ -486,6 +486,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         err = self.alloc_var()
         self._exceptions.append(err)
         js.append("} catch (%s) {" % err)
+        js.append("%(s)s%(e)s = $PY.exceptionify(%(e)s);" % {"s":self.indention, "e":err})
         
         catchall = False
         for i, n in enumerate(node.handlers):
@@ -542,6 +543,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         
         exc_var = self.alloc_var()
         js.append("} catch (%s) {" % exc_var)
+        js.append("%(s)s%(e)s = $PY.exceptionify(%(e)s);" % {"s":self.indention, "e":exc_var})
         js.append("%s%s = %s;" % (self.indention, exc_store, exc_var))
         js.append("}")
         
@@ -652,6 +654,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
                     )
                 )
                 stmt.append("} catch (%s) {" % catch_var)
+                stmt.append("%(s)s%(e)s = $PY.exceptionify(%(e)s);" % {"s":self.indention, "e":catch_var})
                 stmt.append("%sif ($PY.isinstance(%s, __builtins__.PY$AttributeError)) {" % (self.indention, catch_var))
                 stmt.append("%s%sthrow __builtins__.PY$ImportError('Could not find %s');" % (
                         self.indention,

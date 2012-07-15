@@ -117,4 +117,14 @@ BaseException.PY$__str__ = function() {
      create_exceptions(BaseException, exceptions);
 })();
 
+$PY.exceptionify = function(err) {
+    if (err && err.PY$__class__ !== undefined) {
+        return err;
+    } else if (err instanceof ReferenceError) {
+    	return __builtins__["PY$NameError"](str(err.name + ": " + err.message));
+    } else {
+    	return err;
+    }
+}
+
 $PY.c_stopiter = __builtins__.PY$StopIteration("No more items");
