@@ -7,6 +7,7 @@ import testtools.tests
 import os
 from unittest import installHandler
 from pyjs import BuiltinGenerator
+from sys import stdout, stderr
 
 should_remove_suffixes = (
         ".py.js.out",
@@ -178,6 +179,12 @@ def main():
     except KeyboardInterrupt:
         pass
     if options.qunit:
+        heading = 'Creating QUnit Tests'
+        print ""
+        print "~" * len(heading)
+        print heading
+        print "~" * len(heading)
+        print ""
         output_dir = os.path.join(os.getcwd(), "QUnit/")
         try:
             os.makedirs(output_dir)
@@ -188,13 +195,26 @@ def main():
             for suite, name in testtools.tests.get_test_names_in_suite(test_suites):
                 if hasattr(suite, "templ"):
                     qunit_suites.append(suite)
-            for suite in qunit_suites:
+            count = len(qunit_suites)
+            for i, suite in enumerate(qunit_suites, start=1):
                 py_out_path = os.path.join(os.getcwd(), suite.templ["py_out_path"])
                 py_js_path = os.path.join(os.getcwd(), suite.templ["js_path"])
                 if "js_run_file" in suite.templ:
                     py_js_run_file_path = os.path.join(os.getcwd(), suite.templ["js_run_file"])
                 else:
                     py_js_run_file_path = ""
+
+                if not os.path.exists(py_out_path) or not os.path.exists(py_js_path) or (py_js_run_file_path and not os.path.exists(py_js_run_file_path)):
+                    stderr.write("Could not create QUnit test for '%s'.\n" % suite.templ["js_path"])
+                    if not os.path.exists(py_out_path):
+                        stderr.write("Python output file '%s' did not exist.\n" % py_out_path)
+                    if not os.path.exists(py_js_path):
+                        stderr.write("Compiled javascript file '%s' did not exist.\n" % py_js_path)
+                    if py_js_run_file_path and not os.path.exists(py_js_run_file_path):
+                        stderr.write("Javascript run file '%s' did not exist.\n" % py_js_run_file_path)
+                    stderr.write("\n")
+                    continue
+
                 write_to_qunit(fp, 'test("%s", function() {' % suite.templ["js_path"].replace("\\", "/"))
                 write_to_qunit(fp, 'var output = "";', 1)
                 write_to_qunit(fp, "var console = {};", 1)
@@ -217,6 +237,7 @@ def main():
                     write_to_qunit(fp, 'var py_out = "%s";' % output, 1)
                 write_to_qunit(fp, "equal(output.replace(/\\n$/g,''), py_out);", 1)
                 write_to_qunit(fp, "});")
+                stdout.write("QUnit test written: %d%% complete.\r" % (i / count * 100))
         with open(os.path.join(output_dir, "tests.html"), "wb") as fp:
             output = """
 <!DOCTYPE html>
@@ -235,6 +256,7 @@ def main():
 </html>
             """ % qunit_title
             fp.write(output.strip())
+        stdout.write("QUnit test written: 100% complete.\r")
     if not options.no_error and results and results.errors:
         print
         print "errors:"
