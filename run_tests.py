@@ -8,6 +8,7 @@ import os
 from unittest import installHandler
 from pyjs import BuiltinGenerator
 from sys import stdout, stderr
+import shutil 
 
 should_remove_suffixes = (
         ".py.js.out",
@@ -186,17 +187,30 @@ def main():
         print "~" * len(heading)
         print ""
         output_dir = os.path.join(os.getcwd(), "QUnit/")
-        try:
-            os.makedirs(output_dir)
-        except:
-            pass
-        with open(os.path.join(output_dir, "tests.js"), "wb") as fp:
-            qunit_suites = []
-            for suite, name in testtools.tests.get_test_names_in_suite(test_suites):
-                if hasattr(suite, "templ"):
-                    qunit_suites.append(suite)
-            count = len(qunit_suites)
-            for i, suite in enumerate(qunit_suites, start=1):
+        output_test_dir = os.path.join(output_dir, "tests/")
+        output_html_path = os.path.join(output_dir, "tests.html")
+        for path in (output_test_dir, output_html_path):
+            try:
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                else:
+                    os.remove(path)
+            except:
+                pass
+        for path in (output_dir, output_test_dir):
+            try:
+                os.makedirs(path)
+            except:
+                pass
+        qunit_suites = []
+        for suite, name in testtools.tests.get_test_names_in_suite(test_suites):
+            if hasattr(suite, "templ"):
+                qunit_suites.append(suite)
+        script_tag = ""
+        count = len(qunit_suites)
+        for i, suite in enumerate(qunit_suites, start=1):
+            output_test_path = os.path.join(output_test_dir, "%d.js" % i)
+            with open(output_test_path, "wb") as fp:
                 try:
                     py_out_path = os.path.join(os.getcwd(), suite.templ["py_out_path"])
                 except KeyError:
@@ -223,6 +237,8 @@ def main():
                         stderr.write("Javascript run file '%s' did not exist.\n" % py_js_run_file_path)
                     stderr.write("\n")
                     continue
+                
+                script_tag += '<script src="%s"></script>' % os.path.relpath(output_test_path, output_dir).replace("\\", "/")
 
                 write_to_qunit(fp, 'test("%s", function() {' % suite.templ["js_path"].replace("\\", "/"))
                 write_to_qunit(fp, 'var output = "";', 1)
@@ -247,7 +263,7 @@ def main():
                 write_to_qunit(fp, "equal(output.replace(/\\n$/g,''), py_out);", 1)
                 write_to_qunit(fp, "});")
                 stdout.write("QUnit test written: %d%% complete.\r" % (i / count * 100))
-        with open(os.path.join(output_dir, "tests.html"), "wb") as fp:
+        with open(output_html_path, "wb") as fp:
             output = """
 <!DOCTYPE html>
 <html>
@@ -256,14 +272,14 @@ def main():
         <title>Pyjaco QUnit Tests -- %s</title>
         <link rel="stylesheet" href="qunit.css">
         <script src="qunit.js"></script>
-        <script src="tests.js"></script>
+        %s
     </head>
     <body>
         <div id="qunit"></div>
         <div id="qunit-fixture"></div>
     </body>
 </html>
-            """ % qunit_title
+            """ % (qunit_title, script_tag)
             fp.write(output.strip())
         stdout.write("QUnit test written: 100% complete.\n")
     if not options.no_error and results and results.errors:
