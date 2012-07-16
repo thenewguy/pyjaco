@@ -265,7 +265,7 @@ def main():
 </html>
             """ % qunit_title
             fp.write(output.strip())
-        stdout.write("QUnit test written: 100% complete.\r")
+        stdout.write("QUnit test written: 100% complete.\n")
     if not options.no_error and results and results.errors:
         print
         print "errors:"
