@@ -197,8 +197,17 @@ def main():
                     qunit_suites.append(suite)
             count = len(qunit_suites)
             for i, suite in enumerate(qunit_suites, start=1):
-                py_out_path = os.path.join(os.getcwd(), suite.templ["py_out_path"])
-                py_js_path = os.path.join(os.getcwd(), suite.templ["js_path"])
+                try:
+                    py_out_path = os.path.join(os.getcwd(), suite.templ["py_out_path"])
+                except KeyError:
+                    stderr.write("Test '%s' cannot be tested with QUnit.\n" % suite)
+                    continue
+                try:
+                    py_js_path = os.path.join(os.getcwd(), suite.templ["js_path"])
+                except KeyError:
+                    stderr.write("Test '%s' cannot be tested with QUnit.\n" % suite.templ["py_out_path"])
+                    continue
+                
                 if "js_run_file" in suite.templ:
                     py_js_run_file_path = os.path.join(os.getcwd(), suite.templ["js_run_file"])
                 else:
