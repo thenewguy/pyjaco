@@ -243,8 +243,8 @@ def main():
                 write_to_qunit(fp, 'test("%s", function() {' % suite.templ["js_path"].replace("\\", "/"))
                 write_to_qunit(fp, 'var output = "";', 1)
                 write_to_qunit(fp, "var console = {};", 1)
-                write_to_qunit(fp, "console.log = function(input) {", 1)
-                write_to_qunit(fp, "output += input + '\\n';", 2)
+                write_to_qunit(fp, "console.log = function() {", 1)
+                write_to_qunit(fp, "output += ((arguments.length === 0) ? '' : [].join.call(arguments, ' ')) + '\\n';", 2)
                 write_to_qunit(fp, "}", 1)
                 write_to_qunit(fp, builtins, 1)
                 with open(py_js_path, "rb") as py_js:
