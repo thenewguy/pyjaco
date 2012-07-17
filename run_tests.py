@@ -208,7 +208,8 @@ def main():
                 qunit_suites.append(suite)
         script_tag = ""
         count = len(qunit_suites)
-        for i, suite in enumerate(qunit_suites, start=1):
+        i = 1
+        for suite in qunit_suites:
             output_test_path = os.path.join(output_test_dir, "%d.js" % i)
             with open(output_test_path, "wb") as fp:
                 try:
@@ -267,6 +268,7 @@ def main():
                 write_to_qunit(fp, "equal(output.replace(/\\n$/g,''), py_out);", 1)
                 write_to_qunit(fp, "});")
                 stdout.write("QUnit test written: %d%% complete.\r" % (i / count * 100))
+                i += 1
         with open(output_html_path, "wb") as fp:
             output = """
 <!DOCTYPE html>
