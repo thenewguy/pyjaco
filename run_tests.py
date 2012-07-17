@@ -244,7 +244,11 @@ def main():
                 write_to_qunit(fp, 'var output = "";', 1)
                 write_to_qunit(fp, "var console = {};", 1)
                 write_to_qunit(fp, "console.log = function() {", 1)
-                write_to_qunit(fp, "output += ((arguments.length === 0) ? '' : [].join.call(arguments, ' ')) + '\\n';", 2)
+                write_to_qunit(fp, "var inputs = [];", 2)
+                write_to_qunit(fp, "for(var i = 0; i < arguments.length; i++) {", 2)
+                write_to_qunit(fp, "inputs[i] = ((arguments[i] != null) && arguments[i]._js_ !== undefined) ? str(arguments[i])._js_() : arguments[i];", 3)
+                write_to_qunit(fp, "}", 2)
+                write_to_qunit(fp, "output += ((inputs.length === 0) ? '' : inputs.join(' ')) + '\\n';", 2)
                 write_to_qunit(fp, "}", 1)
                 write_to_qunit(fp, builtins, 1)
                 with open(py_js_path, "rb") as py_js:
