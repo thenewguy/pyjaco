@@ -263,7 +263,7 @@ def main():
                 with open(py_out_path, "rb") as py_out:
                     output = py_out.read().splitlines()
                     output = "\\n".join(output)
-                    output = output.replace('"', '\"')
+                    output = output.replace('"', '\\"')
                     write_to_qunit(fp, 'var py_out = "%s";' % output, 1)
                 write_to_qunit(fp, "equal(output.replace(/\\n$/g,''), py_out);", 1)
                 write_to_qunit(fp, "});")
