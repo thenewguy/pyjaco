@@ -242,14 +242,14 @@ def main():
                 script_tag += '<script src="%s"></script>' % os.path.relpath(output_test_path, output_dir).replace("\\", "/")
 
                 write_to_qunit(fp, 'test("%s", function() {' % suite.templ["js_path"].replace("\\", "/"))
-                write_to_qunit(fp, 'var output = "";', 1)
+                write_to_qunit(fp, 'var output = [];', 1)
                 write_to_qunit(fp, "var console = {};", 1)
                 write_to_qunit(fp, "console.log = function() {", 1)
                 write_to_qunit(fp, "var inputs = [];", 2)
                 write_to_qunit(fp, "for(var i = 0; i < arguments.length; i++) {", 2)
                 write_to_qunit(fp, "inputs[i] = ((arguments[i] != null) && arguments[i]._js_ !== undefined) ? str(arguments[i])._js_() : arguments[i];", 3)
                 write_to_qunit(fp, "}", 2)
-                write_to_qunit(fp, "output += ((inputs.length === 0) ? '' : inputs.join(' ')) + '\\n';", 2)
+                write_to_qunit(fp, "output.push(((inputs.length === 0) ? '' : inputs.join(' ')));", 2)
                 write_to_qunit(fp, "}", 1)
                 write_to_qunit(fp, builtins, 1)
                 with open(py_js_path, "rb") as py_js:
@@ -261,11 +261,13 @@ def main():
                     with open(py_js_run_file_path, "rb") as py_js_run_file:
                         write_to_qunit(fp, py_js_run_file.read(), 1)
                 with open(py_out_path, "rb") as py_out:
-                    output = py_out.read().splitlines()
-                    output = "\\n".join(output)
+                    output = py_out.read()
+                    output = output.replace("\\", "\\\\")
                     output = output.replace('"', '\\"')
+                    output = output.splitlines()
+                    output = "\\n".join(output)
                     write_to_qunit(fp, 'var py_out = "%s";' % output, 1)
-                write_to_qunit(fp, "equal(output.replace(/\\n$/g,''), py_out);", 1)
+                write_to_qunit(fp, "equal(output.join('\\n'), py_out);", 1)
                 write_to_qunit(fp, "});")
                 stdout.write("QUnit test written: %d%% complete.\r" % (i / count * 100))
                 i += 1
