@@ -262,12 +262,11 @@ def main():
                         write_to_qunit(fp, py_js_run_file.read(), 1)
                 with open(py_out_path, "rb") as py_out:
                     output = py_out.read()
-                    output = output.replace("\\", "\\\\")
-                    output = output.replace('"', '\\"')
-                    output = output.splitlines()
-                    output = "\\n".join(output)
-                    write_to_qunit(fp, 'var py_out = "%s";' % output, 1)
-                write_to_qunit(fp, "equal(output.join('\\n'), py_out);", 1)
+                output = output.replace("\\", "\\\\")
+                output = output.replace('"', '\\"')
+                output = output.splitlines()
+                output = "\\n".join(output)
+                write_to_qunit(fp, 'equal(output.join("\\n"), "%s");' % output, 1)
                 write_to_qunit(fp, "});")
                 stdout.write("QUnit test written: %d%% complete.\r" % (i / count * 100))
                 i += 1
