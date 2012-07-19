@@ -177,9 +177,13 @@ def get_test_names_in_suite(test_suite):
         """tries to flatten out a suite to the individual tests"""
         import itertools
         try:
-            return itertools.chain.from_iterable(flatten(item) for item in iter)
+            return itertools.chain.from_iterable(flatten(item) for item in itr)
         except TypeError:
-            return itertools.chain(*itr)
+            try:
+                return itertools.chain(*itr)
+            except TypeError:
+                return [itr]
+        
     l = []
     for suite in flatten(iter(test_suite)):
         try:
