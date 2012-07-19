@@ -290,6 +290,7 @@ def main():
                         script_tag += '<script src="%s"></script>' % os.path.relpath(output_test_path, output_dir).replace("\\", "/")
         
                         write_to_qunit(fp, 'test("%s", function() {' % suite.templ["js_path"].replace("\\", "/"))
+                        write_to_qunit(fp, '"use strict";', 1)
                         write_to_qunit(fp, 'var output = [];', 1)
                         write_to_qunit(fp, 'function load(x) {};', 1)
                         write_to_qunit(fp, "var console = {};", 1)
