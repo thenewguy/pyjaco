@@ -257,6 +257,10 @@ def main():
                     if content:
                         del content[0]# remove 'load("py-builtins.js");'
                     write_to_qunit(fp, content, 1)
+                if getattr(suite, "imports", None):
+                    for imp in suite.imports:
+                        with open(imp, "rb") as imp_fp:
+                            write_to_qunit(fp, imp_fp.read(), 1)
                 if py_js_run_file_path:
                     with open(py_js_run_file_path, "rb") as py_js_run_file:
                         write_to_qunit(fp, py_js_run_file.read(), 1)

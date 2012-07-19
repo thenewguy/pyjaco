@@ -208,6 +208,7 @@ def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfi
             "name": file_name,
             "base": '--base "%s"' % base if base else ''
         }
+        imports = []
         def reportProgres(self):
             """Should be overloaded by the test result class"""
 
@@ -246,6 +247,7 @@ def compile_as_module_and_run_file_test(file_path, file_name=None, output_postfi
                         if py_path == self.templ["py_path"].replace("\\","/"):
                             continue
                         js_path = py_path + ".js"
+                        self.imports.append(js_path)
                         cmd = (
                             '%(py_executable)s pyjs.py -q --as-module %(base)s '
                             '"%(py_path)s" > "%(js_path)s"'
