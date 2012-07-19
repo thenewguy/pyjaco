@@ -291,6 +291,7 @@ def main():
         
                         write_to_qunit(fp, 'test("%s", function() {' % suite.templ["js_path"].replace("\\", "/"))
                         write_to_qunit(fp, 'var output = [];', 1)
+                        write_to_qunit(fp, 'function load(x) {};', 1)
                         write_to_qunit(fp, "var console = {};", 1)
                         write_to_qunit(fp, "console.log = function() {", 1)
                         write_to_qunit(fp, "var inputs = [];", 2)
@@ -302,8 +303,6 @@ def main():
                         write_to_qunit(fp, builtins, 1)
                         with open(py_js_path, "rb") as py_js:
                             content = py_js.read().splitlines()
-                        if content:
-                            del content[0]# remove 'load("py-builtins.js");'
                         write_to_qunit(fp, content, 1)
                         if getattr(suite, "imports", None):
                             for imp in suite.imports:
