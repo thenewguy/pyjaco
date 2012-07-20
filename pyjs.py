@@ -62,6 +62,7 @@ class BuiltinGenerator(object):
 def compile_file(infile, outfile, options):
     '''Compile a single python file object to a single javascript output file
     object'''
+    outfile.write('"use strict";\n')
     if options.builtins == "include":
         builtins = BuiltinGenerator().generate_builtins()
 
