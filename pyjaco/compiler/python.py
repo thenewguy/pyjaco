@@ -310,11 +310,15 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             js = ["%s.PY$__setslice__(%s, %s, %s);" % (self.visit(target.value), self.visit(target.slice.lower), self.visit(target.slice.upper), value)]
         else:
             if isinstance(target, ast.Name):
-                var = target.id
-                if self.scope_is_global or var in self._global_identifiers:
-                    var = self.build_ref(var)
                 declare = ""
-                if not var in self.local_scope and not var in self._global_identifiers:
+                
+                var = target.id
+                if var in self._global_identifiers or self.module and self.scope_is_global:
+                    var = self.visit(target)
+                if var.startswith("__builtins__.PY$"):
+                    var = var[16:]
+                    
+                if not var in self._global_identifiers and not var in self.local_scope:
                     self._vars.append(var)
                     if not self.module or not var.startswith(self.module_ref):
                         declare = "var "
@@ -340,19 +344,12 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             raise JSError("Unsupported AugAssign type %s" % node.op)
 
     def visit_For(self, node):
-        if isinstance(node.target, ast.Name):
-            if self.module and not self.scope_is_global and not node.target.id in self.local_scope:
-                self._vars.append(node.target.id)
-            for_target = self.visit(node.target)
-        elif isinstance(node.target, ast.Tuple):
-            for_target = self.alloc_var()
-        else:
-            raise JSError("Advanced for-loop decomposition not supported")
-
         js = []
-
+        
         if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, ast.Name) and node.iter.func.id == "range" and not node.orelse:
+            varvals = []
             counter  = self.visit(node.target)
+            varvals.append((counter, None))
             end_var  = self.alloc_var()
             assert(len(node.iter.args) in (1,2,3))
             if len(node.iter.args) == 1:
@@ -368,18 +365,43 @@ class Compiler(pyjaco.compiler.BaseCompiler):
                 end   = self.visit(node.iter.args[1])
                 step  = self.visit(node.iter.args[2])
 
-            js.append("%s = %s;" % (end_var, end))
+            varvals.append((end_var, end))
             if step <> "$c1":
                 step_var = self.alloc_var()
-                js.append("%s = %s;" % (step_var, step));
+                varvals.append((step_var, step))
             else:
                 step_var = step
+            
+            for var, val in varvals:
+                declare = "" 
+                if not var in self._global_identifiers and not var in self.scope:
+                    self._vars.append(var)
+                    if not self.module or not var.startswith(self.module_ref):
+                        declare = "var "
+                if val is not None:
+                    js.append("%s%s = %s;" % (declare, var, val));
+                elif declare:
+                    js.append("%s%s;" % (declare, var))
+                
             js.append("for (%s = %s; %s.PY$__lt__(%s) == True; %s = %s.PY$__add__(%s)) {" % (counter, start, counter, end_var, counter, counter, step_var))
             for stmt in node.body:
                 js.extend(self.indent(self.visit(stmt)))
             js.append("}")
             return js
 
+        declare_for_target = False
+        if isinstance(node.target, ast.Name):
+            if not node.target.id in self.local_scope:
+                self._vars.append(node.target.id)
+                declare_for_target = True
+            for_target = self.visit(node.target)
+        elif isinstance(node.target, ast.Tuple):
+            for_target = self.alloc_var()
+            declare_for_target = True
+        else:
+            raise JSError("Advanced for-loop decomposition not supported")
+        if declare_for_target:
+            js.append("var %s;" % for_target);
 
         for_iter = self.visit(node.iter)
 
@@ -390,11 +412,6 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             orelse_var = self.alloc_var()
             js.append("var %s = true;" % orelse_var)
 
-        if not for_target in self.local_scope:
-            if not self.module:
-                js.append("var %s;" % for_target);
-            self._vars.append(for_target)
-        
         for_init = "var %s = iter(%s)" % (iter_var, for_iter)
         for_iter = "%s = $PY.next(%s)" % (for_target, iter_var)
         for_cond = "%s !== null" % (for_target)
@@ -403,7 +420,7 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             for i, x in enumerate(node.target.elts):
                 var = self.visit(x)
                 declare = ""
-                if isinstance(var, ast.Name):
+                if isinstance(x, ast.Name):
                     if not var in self._global_identifiers and not var in self.scope:
                         self._vars.append(var)
                         if not self.module or not var.startswith(self.module_ref):
