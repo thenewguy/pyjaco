@@ -24,6 +24,34 @@ def create_cases():
     failing_test_cases = unittest.TestSuite()
     module_test_cases = unittest.TestSuite()
     module_failing_test_cases = unittest.TestSuite()
+    
+    test_paths = glob.glob("tests/jsvar_test_*.py")
+    test_paths.sort()
+    for test_path in test_paths:
+        test_path = test_path.replace("\\","/")
+        results_path = "%s.res" % os.path.splitext(test_path)[0]
+        if not os.path.exists(results_path):
+            continue
+        
+        # test standard result
+        test_cases.addTest(
+            unittest.TestLoader().loadTestsFromTestCase(
+                util.compile_file_and_verify_output(test_path, results_path)
+                )
+            )
+        
+        # also test as module
+        module_test_cases.addTest(
+            unittest.TestLoader().loadTestsFromTestCase(    
+                util.compile_file_and_verify_output(
+                        test_path, 
+                        results_path,
+                        output_postfix = "as_module",
+                        as_module = True,
+                        base = os.path.dirname(test_path).replace("\\", "/")
+                    )
+                )
+            )
 
     test_paths = glob.glob("tests/test_*.py")
     test_paths.sort()

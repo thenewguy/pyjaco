@@ -92,7 +92,76 @@ def compile_file_test(file_path, file_name=None):
             return "%(py_unix_path)s [1]: " % self.templ
     return CompileFile
 
+def compile_file_and_verify_output(file_path, result_path, output_postfix=None, as_module=False, base=None):
+    """
+        Creates a test that compiles and runs the python file as js 
+        comparing the output against a hardcoded result
+    """
+    class CompileFileAndVerifyOutput(unittest.TestCase):
+        """Test if a file can be compiled by python."""
+        output_path = postfix_path_filename(file_path, output_postfix)
+        templ = {
+            "py_executable": sys.executable,
+            "as_module": "--as-module " if as_module else "",
+            "py_path": file_path, 
+            "js_path": output_path + ".js",
+            "compiler_error": output_path + ".comp.err",
+            "js_out_path": output_path + ".js.out",
+            "js_error": output_path + ".js.err",
+            "js_run_file": output_path + ".js.run",
+            "base": '--base "%s" ' % base if base else ''
+        }
+        def reportProgres(self):
+            """Should be overloaded by the test result class"""
 
+        def runTest(self):
+            """The actual test goes here."""
+            self.templ.update(js_exec=js_exec)
+            
+            # create javascript run file
+            if as_module:
+                # determine module name characteristics for the run file
+                dotted = create_dotted_path(self.templ["py_path"], base)[-1]
+                with open(self.templ['js_run_file'], 'w') as f:
+                    f.write("\n")
+                    f.write("$PY.run_module('%s', '__main__')" % dotted)
+            
+            commands = [
+                # compile to js
+                (
+                '%(py_executable)s pyjs.py -I -q %(as_module)s%(base)s'
+                '"%(py_path)s" > "%(js_path)s" 2> '
+                '"%(compiler_error)s"'
+                ) % self.templ,
+            ]
+
+            # run js
+            if as_module:
+                commands.append(
+                    (
+                    '"%(js_exec)s" -f "%(js_path)s"'
+                    ' -f "%(js_run_file)s" > "%(js_out_path)s" 2> '
+                    '"%(js_error)s"' 
+                    ) % self.templ
+                )
+            else:
+                commands.append(
+                    (
+                    '"%(js_exec)s" -f "%(js_path)s" > "%(js_out_path)s" 2> '
+                    '"%(js_error)s"' 
+                    ) % self.templ,
+                )
+            for cmd in commands:
+                self.assertEqual(0, run_command(cmd))
+                self.reportProgres()
+                
+            self.assertEqual(
+                file(self.templ["js_out_path"]).readlines(),
+                file(result_path).readlines()
+            )
+        def __str__(self):
+            return self.output_path
+    return CompileFileAndVerifyOutput
 
 
 def compile_and_run_file_test(file_path, file_name=None):

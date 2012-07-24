@@ -76,9 +76,10 @@ class Compiler(pyjaco.compiler.BaseCompiler):
         "LtE": "le",
     }
 
-    def __init__(self, opts, **kwargs):
+    def __init__(self, jsvars, opts, **kwargs):
         super(Compiler, self).__init__(opts, **kwargs)
         self.future_division = False
+        self.jsvars = jsvars
         self.opts = opts
 
     def stack_destiny(self, names, skip):
@@ -612,7 +613,13 @@ class Compiler(pyjaco.compiler.BaseCompiler):
             else:
                 raise JSError("Unknown import from __future__: %s" % node.names[0].name)
         elif node.module == "__javascript__":
-            raise JSError("import from __javascript__ is not supported yet")
+            if self.scope_is_global:
+                for node in node.names:
+                    if node.asname:
+                        raise JSError("import from __javascript__ does not support the 'as' keyword")
+                    self.jsvars.append(node.name)
+            else:
+                raise JSError("import from __javascript__ is only supported in global scope")
         else:
             module = node.module
             catch_var = self.alloc_var()

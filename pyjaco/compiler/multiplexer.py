@@ -55,7 +55,13 @@ class Compiler(pyjaco.compiler.BaseCompiler):
 
     def __init__(self, jsvars, opts, **kwargs):
         super(Compiler, self).__init__(opts, **kwargs)
-        self.comp_py = pyjaco.compiler.python.Compiler(opts, **kwargs)
+        
+        if jsvars:
+            self.jsvars = jsvars[:]
+        else:
+            self.jsvars = []
+        
+        self.comp_py = pyjaco.compiler.python.Compiler(self.jsvars, opts, **kwargs)
         self.comp_js = pyjaco.compiler.javascript.Compiler(opts, **kwargs)
 
         self.visit_py = self.comp_py.visit
@@ -71,11 +77,6 @@ class Compiler(pyjaco.compiler.BaseCompiler):
 
         self.comp_py.stack = self.stack
         self.comp_js.stack = self.stack
-
-        if jsvars:
-            self.jsvars = jsvars[:]
-        else:
-            self.jsvars = []
 
         self.enter("py")
 
