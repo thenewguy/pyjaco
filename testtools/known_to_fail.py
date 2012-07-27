@@ -47,4 +47,6 @@ KNOWN_TO_FAIL = [
     
     "tests/basic/try_finally_simple.py",
     "tests/basic/try_finally_simple_as_module.py",
+    
+    "tests/jsvar_test_typeof_as_module.py",
 ]

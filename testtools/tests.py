@@ -33,25 +33,52 @@ def create_cases():
         if not os.path.exists(results_path):
             continue
         
-        # test standard result
-        test_cases.addTest(
-            unittest.TestLoader().loadTestsFromTestCase(
-                util.compile_file_and_verify_output(test_path, results_path)
-                )
-            )
-        
-        # also test as module
-        module_test_cases.addTest(
-            unittest.TestLoader().loadTestsFromTestCase(    
-                util.compile_file_and_verify_output(
-                        test_path, 
-                        results_path,
-                        output_postfix = "as_module",
-                        as_module = True,
-                        base = os.path.dirname(test_path).replace("\\", "/")
+        if (
+            test_path.replace("\\","/") not 
+            in known_to_fail.KNOWN_TO_FAIL
+            ):
+            test_cases.addTest(
+                unittest.TestLoader().loadTestsFromTestCase(
+                    util.compile_file_and_verify_output(test_path, results_path)
                     )
                 )
-            )
+        else:
+            failing_test_cases.addTest(
+                unittest.TestLoader().loadTestsFromTestCase(
+                    util.compile_file_and_verify_output_failing(test_path, results_path)
+                    )
+                )
+        
+        if (
+            util.postfix_path_filename(
+                test_path.replace("\\","/"), 
+                test_paths_module_postfix
+            ) not in known_to_fail.KNOWN_TO_FAIL
+        ):
+            module_test_cases.addTest(
+                unittest.TestLoader().loadTestsFromTestCase(    
+                    util.compile_file_and_verify_output(
+                            test_path, 
+                            results_path,
+                            output_postfix = "as_module",
+                            as_module = True,
+                            base = os.path.dirname(test_path).replace("\\", "/")
+                        )
+                    )
+                )
+        else:
+            module_failing_test_cases.addTest(
+                unittest.TestLoader().loadTestsFromTestCase(    
+                    util.compile_file_and_verify_output_failing(
+                            test_path, 
+                            results_path,
+                            output_postfix = "as_module",
+                            as_module = True,
+                            base = os.path.dirname(test_path).replace("\\", "/")
+                        )
+                    )
+                )
+            
 
     test_paths = glob.glob("tests/test_*.py")
     test_paths.sort()

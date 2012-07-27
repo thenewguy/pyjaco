@@ -163,6 +163,17 @@ def compile_file_and_verify_output(file_path, result_path, output_postfix=None, 
             return self.output_path
     return CompileFileAndVerifyOutput
 
+def compile_file_and_verify_output_failing(*a, **k):
+    """Turn a test to a failing test"""
+    _class = compile_file_and_verify_output(*a, **k)
+
+    class FailingTest(_class):
+        """Failing test"""
+        @unittest.expectedFailure
+        def runTest(self):
+            return super(FailingTest, self).runTest()
+
+    return FailingTest
 
 def compile_and_run_file_test(file_path, file_name=None):
     """Creates a test that compiles and runs the python file as js"""
